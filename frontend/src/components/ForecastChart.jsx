@@ -1,13 +1,48 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, BarChart, Bar } from 'recharts';
+import { TrendingUp, TrendingDown, Minus, Clock } from 'lucide-react';
+import { useState } from 'react';
 
 export const ForecastChart = ({ forecast, currentAQI }) => {
+  const [viewMode, setViewMode] = useState('trend'); // 'trend' or 'hourly'
+
+  // Generate hourly data for 72 hours
+  const generateHourlyData = () => {
+    const hours = [];
+    const now = new Date();
+    
+    for (let i = 0; i <= 72; i += 6) {
+      const futureTime = new Date(now.getTime() + i * 60 * 60 * 1000);
+      let aqi;
+      
+      if (i === 0) {
+        aqi = currentAQI;
+      } else if (i <= 24) {
+        aqi = currentAQI + ((forecast.aqi_48h - currentAQI) / 48) * i;
+      } else if (i <= 48) {
+        aqi = currentAQI + ((forecast.aqi_48h - currentAQI) / 48) * 48 + ((forecast.aqi_48h - currentAQI) / 24) * (i - 24) * 0.3;
+      } else {
+        const trend48to72 = forecast.aqi_72h - forecast.aqi_48h;
+        aqi = forecast.aqi_48h + (trend48to72 / 24) * (i - 48);
+      }
+      
+      hours.push({
+        time: i === 0 ? 'Now' : `+${i}h`,
+        hour: futureTime.getHours(),
+        aqi: Math.round(aqi),
+        fullTime: futureTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+      });
+    }
+    return hours;
+  };
+
   const data = [
     { time: 'Now', aqi: currentAQI, label: 'Current' },
     { time: '24h', aqi: (currentAQI + forecast.aqi_48h) / 2, label: '24h' },
     { time: '48h', aqi: forecast.aqi_48h, label: '48 hours' },
     { time: '72h', aqi: forecast.aqi_72h, label: '72 hours' }
   ];
+
+  const hourlyData = generateHourlyData();
 
   const getTrendIcon = () => {
     if (forecast.trend === 'increasing') return <TrendingUp className="h-5 w-5 text-red-500" />;
@@ -21,64 +56,183 @@ export const ForecastChart = ({ forecast, currentAQI }) => {
     return 'text-amber-600';
   };
 
+  const getAQIColor = (aqi) => {
+    if (aqi <= 50) return '#10B981';
+    if (aqi <= 100) return '#F59E0B';
+    if (aqi <= 150) return '#F97316';
+    if (aqi <= 200) return '#EF4444';
+    return '#991B1B';
+  };
+
   return (
     <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-6" data-testid="forecast-chart">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-semibold font-['Manrope']" data-testid="forecast-title">AQI Forecast</h3>
-        <div className="flex items-center gap-2">
-          {getTrendIcon()}
-          <span className={`text-sm font-medium ${getTrendColor()} capitalize`} data-testid="forecast-trend">
-            {forecast.trend}
-          </span>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h3 className="text-xl font-semibold font-['Manrope']" data-testid="forecast-title">AQI Forecast</h3>
+          <p className="text-sm text-slate-500 mt-1">Machine learning prediction for next 72 hours</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            {getTrendIcon()}
+            <span className={`text-sm font-medium ${getTrendColor()} capitalize`} data-testid="forecast-trend">
+              {forecast.trend}
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setViewMode('trend')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                viewMode === 'trend'
+                  ? 'bg-teal-600 text-white shadow-md'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              Trend View
+            </button>
+            <button
+              onClick={() => setViewMode('hourly')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                viewMode === 'hourly'
+                  ? 'bg-teal-600 text-white shadow-md'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              Hourly View
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="bg-slate-50 rounded-lg p-4">
-          <div className="text-sm text-slate-500 mb-1">48 Hour Forecast</div>
-          <div className="text-2xl font-bold font-['Manrope'] text-slate-900" data-testid="forecast-48h">
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4">
+          <div className="text-xs text-blue-700 font-medium mb-1 uppercase tracking-wide">24 Hour Forecast</div>
+          <div className="text-3xl font-bold font-['Manrope'] text-blue-900" data-testid="forecast-24h">
+            {Math.round((currentAQI + forecast.aqi_48h) / 2)}
+          </div>
+          <div className="text-xs text-blue-600 mt-1">AQI Level</div>
+        </div>
+        <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200 rounded-lg p-4">
+          <div className="text-xs text-indigo-700 font-medium mb-1 uppercase tracking-wide">48 Hour Forecast</div>
+          <div className="text-3xl font-bold font-['Manrope'] text-indigo-900" data-testid="forecast-48h">
             {Math.round(forecast.aqi_48h)}
           </div>
+          <div className="text-xs text-indigo-600 mt-1">AQI Level</div>
         </div>
-        <div className="bg-slate-50 rounded-lg p-4">
-          <div className="text-sm text-slate-500 mb-1">72 Hour Forecast</div>
-          <div className="text-2xl font-bold font-['Manrope'] text-slate-900" data-testid="forecast-72h">
+        <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-4">
+          <div className="text-xs text-purple-700 font-medium mb-1 uppercase tracking-wide">72 Hour Forecast</div>
+          <div className="text-3xl font-bold font-['Manrope'] text-purple-900" data-testid="forecast-72h">
             {Math.round(forecast.aqi_72h)}
           </div>
+          <div className="text-xs text-purple-600 mt-1">AQI Level</div>
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={250}>
-        <AreaChart data={data}>
-          <defs>
-            <linearGradient id="aqiGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#0F766E" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="#0F766E" stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-          <XAxis dataKey="time" tick={{ fill: '#64748B', fontSize: 12 }} />
-          <YAxis tick={{ fill: '#64748B', fontSize: 12 }} />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: 'white',
-              border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
-            }}
-          />
-          <Area
-            type="monotone"
-            dataKey="aqi"
-            stroke="#0F766E"
-            strokeWidth={3}
-            fill="url(#aqiGradient)"
-          />
-        </AreaChart>
-      </ResponsiveContainer>
+      {viewMode === 'trend' ? (
+        <ResponsiveContainer width="100%" height={320}>
+          <AreaChart data={data}>
+            <defs>
+              <linearGradient id="aqiGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#0F766E" stopOpacity={0.4} />
+                <stop offset="95%" stopColor="#0F766E" stopOpacity={0.05} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+            <XAxis 
+              dataKey="time" 
+              tick={{ fill: '#64748B', fontSize: 13, fontWeight: 500 }} 
+              axisLine={{ stroke: '#e2e8f0' }}
+              tickLine={{ stroke: '#e2e8f0' }}
+            />
+            <YAxis 
+              tick={{ fill: '#64748B', fontSize: 13 }} 
+              axisLine={{ stroke: '#e2e8f0' }}
+              tickLine={{ stroke: '#e2e8f0' }}
+              label={{ value: 'AQI Level', angle: -90, position: 'insideLeft', style: { fill: '#64748B', fontSize: 12 } }}
+            />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: 'white',
+                border: '1px solid #e2e8f0',
+                borderRadius: '12px',
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                padding: '12px'
+              }}
+              labelStyle={{ fontWeight: 600, marginBottom: '4px' }}
+            />
+            <Area
+              type="monotone"
+              dataKey="aqi"
+              stroke="#0F766E"
+              strokeWidth={3}
+              fill="url(#aqiGradient)"
+              dot={{ fill: '#0F766E', strokeWidth: 2, r: 5 }}
+              activeDot={{ r: 7, strokeWidth: 2 }}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      ) : (
+        <div>
+          <div className="flex items-center gap-2 mb-4 text-sm text-slate-600">
+            <Clock className="h-4 w-4" />
+            <span>6-hour interval predictions</span>
+          </div>
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart data={hourlyData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+              <XAxis 
+                dataKey="time" 
+                tick={{ fill: '#64748B', fontSize: 11 }} 
+                axisLine={{ stroke: '#e2e8f0' }}
+                tickLine={{ stroke: '#e2e8f0' }}
+              />
+              <YAxis 
+                tick={{ fill: '#64748B', fontSize: 12 }} 
+                axisLine={{ stroke: '#e2e8f0' }}
+                tickLine={{ stroke: '#e2e8f0' }}
+                label={{ value: 'AQI', angle: -90, position: 'insideLeft', style: { fill: '#64748B', fontSize: 11 } }}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'white',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '12px',
+                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                  padding: '12px'
+                }}
+                labelStyle={{ fontWeight: 600, marginBottom: '4px' }}
+              />
+              <Bar 
+                dataKey="aqi" 
+                fill="#0F766E"
+                radius={[8, 8, 0, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
-      <div className="mt-4 text-center text-sm text-slate-500">
-        Confidence: <span className="font-semibold text-slate-700" data-testid="forecast-confidence">{forecast.confidence}%</span>
+      <div className="mt-6 flex items-center justify-between text-sm">
+        <div className="text-slate-500">
+          Model Confidence: <span className="font-semibold text-slate-700" data-testid="forecast-confidence">{forecast.confidence}%</span>
+        </div>
+        <div className="flex items-center gap-4 text-xs text-slate-500">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+            <span>Good (0-50)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+            <span>Moderate (51-100)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+            <span>Unhealthy (101-150)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+            <span>Very Unhealthy (151+)</span>
+          </div>
+        </div>
       </div>
     </div>
   );
