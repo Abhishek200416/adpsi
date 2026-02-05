@@ -35,6 +35,27 @@ export const Navbar = ({ isAdmin = false }) => {
                   Dashboard
                 </Link>
                 <Link
+                  to="/prediction"
+                  className="text-slate-700 hover:text-teal-700 font-medium transition-colors"
+                  data-testid="nav-prediction-link"
+                >
+                  Predictions
+                </Link>
+                <Link
+                  to="/directions"
+                  className="text-slate-700 hover:text-teal-700 font-medium transition-colors"
+                  data-testid="nav-directions-link"
+                >
+                  Get Directions
+                </Link>
+                <Link
+                  to="/about"
+                  className="text-slate-700 hover:text-teal-700 font-medium transition-colors"
+                  data-testid="nav-about-link"
+                >
+                  About
+                </Link>
+                <Link
                   to="/report"
                   className="text-slate-700 hover:text-teal-700 font-medium transition-colors"
                   data-testid="nav-report-link"
@@ -46,7 +67,7 @@ export const Navbar = ({ isAdmin = false }) => {
                   className="bg-slate-900 text-white hover:bg-slate-800 rounded-full px-6 py-2 font-medium transition-all shadow-lg hover:shadow-xl"
                   data-testid="nav-admin-login-link"
                 >
-                  Admin Login
+                  Admin
                 </Link>
               </>
             ) : (
