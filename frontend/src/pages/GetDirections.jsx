@@ -174,21 +174,21 @@ export default function GetDirections() {
                 <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg p-4">
                   <div className="text-sm text-emerald-700 font-medium mb-1">Distance</div>
                   <div className="text-3xl font-bold font-['Manrope'] text-emerald-900">
-                    {safeRoute.distance.toFixed(1)}
+                    {safeRoute.distance ? safeRoute.distance.toFixed(1) : 'N/A'}
                   </div>
                   <div className="text-sm text-emerald-600 mt-1">kilometers</div>
                 </div>
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4">
                   <div className="text-sm text-blue-700 font-medium mb-1">Avg. AQI</div>
                   <div className="text-3xl font-bold font-['Manrope'] text-blue-900">
-                    {Math.round(safeRoute.avg_aqi)}
+                    {safeRoute.avg_aqi ? Math.round(safeRoute.avg_aqi) : 'N/A'}
                   </div>
                   <div className="text-sm text-blue-600 mt-1">along route</div>
                 </div>
                 <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-lg p-4">
                   <div className="text-sm text-teal-700 font-medium mb-1">Quality</div>
                   <div className="text-2xl font-bold font-['Manrope'] text-teal-900 capitalize">
-                    {safeRoute.quality}
+                    {safeRoute.quality || 'N/A'}
                   </div>
                   <div className="text-sm text-teal-600 mt-1">route rating</div>
                 </div>
