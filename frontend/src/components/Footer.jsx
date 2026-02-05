@@ -26,13 +26,23 @@ export const Footer = () => {
                 </a>
               </li>
               <li>
-                <a href="/report" className="hover:text-teal-400 transition-colors">
-                  Report Pollution
+                <a href="/prediction" className="hover:text-teal-400 transition-colors">
+                  AI Predictions
                 </a>
               </li>
               <li>
-                <a href="/admin/login" className="hover:text-teal-400 transition-colors">
-                  Policy Dashboard
+                <a href="/directions" className="hover:text-teal-400 transition-colors">
+                  Safe Routes
+                </a>
+              </li>
+              <li>
+                <a href="/about" className="hover:text-teal-400 transition-colors">
+                  About Us
+                </a>
+              </li>
+              <li>
+                <a href="/report" className="hover:text-teal-400 transition-colors">
+                  Report Pollution
                 </a>
               </li>
             </ul>
