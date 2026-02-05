@@ -1,0 +1,202 @@
+{
+  "design_system": {
+    "identity": {
+      "name": "Delhi Air Command",
+      "tone": "Authoritative, Urgent, Scientific, Hopeful",
+      "archetype": "The Scientific Guardian",
+      "keywords": [
+        "Clarity",
+        "Precision",
+        "Action",
+        "Breath"
+      ]
+    },
+    "typography": {
+      "headings": {
+        "font_family": "Manrope, sans-serif",
+        "weights": [
+          600,
+          700,
+          800
+        ],
+        "usage": "Use Manrope for all headings and data values (e.g., AQI numbers). It is modern and geometric."
+      },
+      "body": {
+        "font_family": "Inter, sans-serif",
+        "weights": [
+          400,
+          500
+        ],
+        "usage": "Use Inter for body text, labels, and long-form content. High legibility."
+      },
+      "scale": {
+        "hero": "text-5xl md:text-7xl font-bold tracking-tight",
+        "h1": "text-4xl md:text-5xl font-bold tracking-tight",
+        "h2": "text-3xl font-semibold tracking-tight",
+        "h3": "text-2xl font-semibold",
+        "body_lg": "text-lg leading-relaxed",
+        "body": "text-base leading-relaxed text-slate-600",
+        "caption": "text-sm text-slate-500 uppercase tracking-wider font-medium"
+      }
+    },
+    "colors": {
+      "palette": {
+        "background": {
+          "light": "#F8FAFC",
+          "dark": "#0F172A",
+          "paper_light": "#FFFFFF",
+          "paper_dark": "#1E293B"
+        },
+        "brand": {
+          "primary": "#334155",
+          "accent": "#0F766E",
+          "action": "#2563EB"
+        },
+        "aqi_scale": {
+          "good": "#10B981",
+          "moderate": "#F59E0B",
+          "unhealthy": "#F97316",
+          "hazardous": "#EF4444",
+          "critical": "#7F1D1D"
+        },
+        "sources": {
+          "traffic": "#64748B",
+          "industry": "#475569",
+          "stubble": "#D97706",
+          "construction": "#B45309"
+        }
+      },
+      "rules": "Use light mode by default. Use Slate-50 for app background to reduce eye strain. Use AQI colors ONLY for data points, not for decoration."
+    },
+    "layout": {
+      "spacing": "Generous. Use p-6 or p-8 for cards. Gap-6 for grids.",
+      "border_radius": "rounded-xl (12px) for cards, rounded-full for buttons.",
+      "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+      "grid_strategy": "Bento Grid. Mix distinct shapes (square stats, tall lists, wide maps)."
+    },
+    "components": {
+      "buttons": {
+        "primary": "bg-slate-900 text-white hover:bg-slate-800 rounded-full px-8 py-3 font-medium transition-all shadow-lg hover:shadow-xl",
+        "secondary": "bg-white text-slate-900 border border-slate-200 hover:bg-slate-50 rounded-full px-8 py-3 font-medium transition-all",
+        "danger": "bg-red-600 text-white hover:bg-red-700 rounded-full px-6 py-2"
+      },
+      "cards": {
+        "style": "bg-white border border-slate-200 shadow-sm hover:shadow-md transition-shadow rounded-xl p-6",
+        "glass": "bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg"
+      },
+      "inputs": {
+        "style": "bg-slate-50 border-slate-200 focus:ring-2 focus:ring-slate-900 focus:border-transparent rounded-lg"
+      }
+    },
+    "visual_enhancers": {
+      "glassmorphism": "Use heavily on the Map View for floating controls (AQI legend, search bar).",
+      "gradients": "Use subtle 'Airy' gradients (Slate-50 to White) for section backgrounds. NO harsh gradients.",
+      "shadows": "Soft, diffuse shadows (shadow-lg) for floating elements. Crisp, tight shadows (shadow-sm) for dashboard cards.",
+      "icons": "Use Lucide-React. Stroke width 1.5px (clean)."
+    }
+  },
+  "pages": {
+    "landing": {
+      "sections": [
+        "Hero (Interactive Map Background + KPI Overlay)",
+        "Live AQI Ticker",
+        "Problem Visualization (Sources)",
+        "Features Grid (Bento Style)",
+        "Citizen Action (Report + Route)",
+        "Footer"
+      ],
+      "hero_image": "https://images.unsplash.com/photo-1766405531756-b1290ba82619?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODh8MHwxfHNlYXJjaHwyfHxkZWxoaSUyMGluZGlhJTIwZ2F0ZSUyMHNtb2clMjBwb2xsdXRpb258ZW58MHx8fHwxNzcwMjkxNTAwfDA&ixlib=rb-4.1.0&q=85"
+    },
+    "dashboard_public": {
+      "layout": "Grid with Map as centerpiece.",
+      "widgets": [
+        "AQI Gauge (Donut Chart)",
+        "Map View (Leaflet)",
+        "Pollutant Breakdown (Bar Chart)",
+        "Forecast (Line Chart with Confidence Area)",
+        "Health Recommendations (Icon List)"
+      ]
+    },
+    "admin_dashboard": {
+      "layout": "Sidebar Navigation + Density Grid.",
+      "widgets": [
+        "Incoming Reports (List)",
+        "Policy Impact Simulator (Range Sliders + Chart)",
+        "Source Attribution (Pie Chart)",
+        "AI Recommendations (Alert Cards)"
+      ]
+    }
+  },
+  "assets": {
+    "images": [
+      {
+        "category": "hero_bg",
+        "url": "https://images.unsplash.com/photo-1766405531756-b1290ba82619?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODh8MHwxfHNlYXJjaHwyfHxkZWxoaSUyMGluZGlhJTIwZ2F0ZSUyMHNtb2clMjBwb2xsdXRpb258ZW58MHx8fHwxNzcwMjkxNTAwfDA&ixlib=rb-4.1.0&q=85",
+        "description": "India Gate in Fog/Smog - Use with dark overlay for Hero text readability."
+      },
+      {
+        "category": "traffic_source",
+        "url": "https://images.unsplash.com/photo-1632261845530-5ae1f3dc5c6c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTN8MHwxfHNlYXJjaHw0fHx0cmFmZmljJTIwamFtJTIwZGVsaGklMjBzbW9nfGVufDB8fHx8MTc3MDI5MTUwMXww&ixlib=rb-4.1.0&q=85",
+        "description": "Motorcycle in smog - Represents traffic pollution."
+      },
+      {
+        "category": "clean_city",
+        "url": "https://images.unsplash.com/photo-1764351776302-55cc518790cd?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1ODB8MHwxfHNlYXJjaHwxfHxjbGVhbiUyMGdyZWVuJTIwY2l0eSUyMHBhcmslMjBkZWxoaXxlbnwwfHx8fDE3NzAyOTE1MDJ8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Clean garden with fountain - The goal state/safe zone."
+      },
+      {
+        "category": "stubble_burning",
+        "url": "https://images.unsplash.com/photo-1696158971473-2aff3d515a43?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzh8MHwxfHNlYXJjaHwyfHxpbmRpYW4lMjBmYXJtZXIlMjBmaWVsZCUyMHN0dWJibGUlMjBidXJuaW5nJTIwc21va2V8ZW58MHx8fHwxNzcwMjkxNTAzfDA&ixlib=rb-4.1.0&q=85",
+        "description": "Man with black smoke - Represents agricultural burning."
+      },
+      {
+        "category": "industry",
+        "url": "https://images.pexels.com/photos/8380589/pexels-photo-8380589.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Industrial chimney - Represents factory pollution."
+      },
+      {
+        "category": "policy_meeting",
+        "url": "https://images.unsplash.com/photo-1769740333462-9a63bfa914bc?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1NzZ8MHwxfHNlYXJjaHwzfHxjb3Jwb3JhdGUlMjBtZWV0aW5nJTIwcm9vbXxlbnwwfHx8fDE3NzAyOTE1MTV8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Corporate meeting - Represents policy makers."
+      },
+      {
+        "category": "citizen_reporting",
+        "url": "https://images.unsplash.com/photo-1714366449821-6ffe48e42355?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODl8MHwxfHNlYXJjaHw0fHxwZXJzb24lMjB1c2luZyUyMG1vYmlsZSUyMHBob25lJTIwb3V0ZG9vcnN8ZW58MHx8fHwxNzcwMjkxNTE2fDA&ixlib=rb-4.1.0&q=85",
+        "description": "Woman using phone - Represents citizen reporting."
+      }
+    ]
+  },
+  "implementation_guidelines": {
+    "charts": "Use Recharts. Style them cleanly: remove grid lines where possible, use rounded bar ends, use the color palette defined above. Tooltips must be styled with white background and shadow-lg.",
+    "maps": "Use React-Leaflet. Use a custom tile layer (e.g., CartoDB Positron) to keep it grey/clean. Overlay colorful circles for AQI data points. Use a heatmap layer for the 'Pollution Heatmap' feature.",
+    "accessibility": "Ensure text contrast > 4.5:1. Use ARIA labels for all charts and map controls.",
+    "mobile": "On mobile, stack the bento grid. The Map should be interactive but not trap the scroll (use two-finger scroll or a 'tap to interact' overlay)."
+  },
+  "instructions_to_main_agent": [
+    "1. Setup the ThemeProvider to handle Light/Dark mode, but default to Light.",
+    "2. Create a 'Layout' component that includes the Navbar (with Admin/Public toggle for demo) and Footer.",
+    "3. Build the 'AQI Card' component first - it is the atomic unit of the dashboard.",
+    "4. For the Map, ensure you handle the 'window' object check for SSR (Next.js/React) if applicable, or just standard React useEffect.",
+    "5. The 'Safe Route' feature should be a UI mockup on the map (drawing a green line vs a red line).",
+    "6. Use the images provided for the 'Pollution Sources' section on the Landing Page."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy.",
+    "Use glass-morphism effects with backdrop filters (12-24px blur).",
+    "You MUST NOT apply universal transition. Eg: transition: all. This results in breaking transforms. Always add transitions for specific interactive elements like button, input excluding transforms.",
+    "You MUST NOT center align the app container, ie do not add .App { text-align: center; } in the css file. This disrupts the human natural reading flow of text.",
+    "Always use modern button styles like pill-shaped, or sharp button with interaction animations & color relevant to the app style.",
+    "NEVER: use AI assistant Emoji characters like 🤖🧠💭💡 for icons.",
+    "Every interaction needs micro-animations - hover states, transitions, parallax effects, and entrance animations. Static = dead.",
+    "Use 2-3x more spacing than feels comfortable. Cramped designs look cheap.",
+    "Subtle grain textures, noise overlays, custom cursors, selection states, and loading animations: separates good from extraordinary.",
+    "Main agent relies on these image URLs. Missing categories (especially sponsor logos) = main agent will use placeholder text which is FORBIDDEN.",
+    "Prioritize using pre-existing components from src/components/ui when applicable.",
+    "Create new components that match the style and conventions of existing components when needed.",
+    "Examine existing components to understand the project's component patterns before creating new ones.",
+    "Components MUST use named exports (export const ComponentName = ...).",
+    "Pages MUST use default exports (export default function PageName() {...}).",
+    "Use sonner for toasts. Sonner component are located in /app/src/components/ui/sonner.tsx."
+  ]
+}
