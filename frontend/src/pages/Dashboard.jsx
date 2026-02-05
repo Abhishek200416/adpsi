@@ -1,36 +1,19 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { AQICard } from '../components/AQICard';
 import { PollutantBar } from '../components/PollutantBar';
-import { ForecastChart } from '../components/ForecastChart';
-import { SourceContribution } from '../components/SourceContribution';
 import { MapView } from '../components/MapView';
-import { SafeRouteMap } from '../components/SafeRouteMap';
-import { AlertTriangle, Navigation, Loader2 } from 'lucide-react';
+import { Loader2, TrendingUp, Navigation } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const delhiLocations = [
-  { name: 'Connaught Place', lat: 28.6315, lng: 77.2167 },
-  { name: 'India Gate', lat: 28.6129, lng: 77.2295 },
-  { name: 'Dwarka', lat: 28.5921, lng: 77.0460 },
-  { name: 'Rohini', lat: 28.7496, lng: 77.0689 },
-  { name: 'Noida', lat: 28.5355, lng: 77.3910 },
-  { name: 'Gurgaon', lat: 28.4595, lng: 77.0266 }
-];
-
 export default function Dashboard() {
   const [aqiData, setAqiData] = useState(null);
-  const [forecast, setForecast] = useState(null);
-  const [sources, setSources] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [routeLoading, setRouteLoading] = useState(false);
-  const [safeRoute, setSafeRoute] = useState(null);
-  const [startLocation, setStartLocation] = useState('');
-  const [endLocation, setEndLocation] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -38,45 +21,12 @@ export default function Dashboard() {
 
   const fetchData = async () => {
     try {
-      const [aqiRes, forecastRes, sourcesRes] = await Promise.all([
-        axios.get(`${API}/aqi/current`),
-        axios.get(`${API}/aqi/forecast`),
-        axios.get(`${API}/aqi/sources`)
-      ]);
+      const aqiRes = await axios.get(`${API}/aqi/current`);
       setAqiData(aqiRes.data);
-      setForecast(forecastRes.data);
-      setSources(sourcesRes.data);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const calculateRoute = async () => {
-    if (!startLocation || !endLocation) {
-      alert('Please select both start and end locations');
-      return;
-    }
-
-    const start = delhiLocations.find(loc => loc.name === startLocation);
-    const end = delhiLocations.find(loc => loc.name === endLocation);
-
-    if (!start || !end) return;
-
-    setRouteLoading(true);
-    try {
-      const response = await axios.post(`${API}/routes/safe`, {
-        start_lat: start.lat,
-        start_lng: start.lng,
-        end_lat: end.lat,
-        end_lng: end.lng
-      });
-      setSafeRoute(response.data);
-    } catch (error) {
-      console.error('Error calculating route:', error);
-    } finally {
-      setRouteLoading(false);
     }
   };
 
