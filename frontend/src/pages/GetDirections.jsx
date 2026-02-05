@@ -1,70 +1,88 @@
-import { useState } from 'react';
-import axios from 'axios';
+import { useState, useEffect } from 'react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
-import { SafeRouteMap } from '../components/SafeRouteMap';
-import { Navigation, MapPin, Loader2, AlertCircle, Route } from 'lucide-react';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
-
-const delhiLocations = [
-  { name: 'Connaught Place', lat: 28.6315, lng: 77.2167 },
-  { name: 'India Gate', lat: 28.6129, lng: 77.2295 },
-  { name: 'Dwarka', lat: 28.5921, lng: 77.0460 },
-  { name: 'Rohini', lat: 28.7496, lng: 77.0689 },
-  { name: 'Noida', lat: 28.5355, lng: 77.3910 },
-  { name: 'Gurgaon', lat: 28.4595, lng: 77.0266 },
-  { name: 'Nehru Place', lat: 28.5494, lng: 77.2501 },
-  { name: 'Saket', lat: 28.5244, lng: 77.2066 },
-  { name: 'Karol Bagh', lat: 28.6519, lng: 77.1906 },
-  { name: 'Lajpat Nagar', lat: 28.5677, lng: 77.2433 }
-];
+import { Navigation, MapPin, Loader2, AlertCircle, ExternalLink } from 'lucide-react';
 
 export default function GetDirections() {
-  const [routeLoading, setRouteLoading] = useState(false);
-  const [safeRoute, setSafeRoute] = useState(null);
-  const [startLocation, setStartLocation] = useState('');
-  const [endLocation, setEndLocation] = useState('');
+  const [destination, setDestination] = useState('');
+  const [currentLocation, setCurrentLocation] = useState(null);
+  const [locationError, setLocationError] = useState('');
+  const [gettingLocation, setGettingLocation] = useState(false);
 
-  const calculateRoute = async () => {
-    if (!startLocation || !endLocation) {
-      alert('Please select both start and end locations');
+  useEffect(() => {
+    // Automatically fetch user's current location on component mount
+    getCurrentLocation();
+  }, []);
+
+  const getCurrentLocation = () => {
+    setGettingLocation(true);
+    setLocationError('');
+    
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation is not supported by your browser');
+      setGettingLocation(false);
       return;
     }
 
-    if (startLocation === endLocation) {
-      alert('Start and end locations must be different');
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setCurrentLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+        setGettingLocation(false);
+      },
+      (error) => {
+        let errorMessage = 'Unable to retrieve your location';
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = 'Location access denied. Please enable location permissions.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = 'Location information is unavailable.';
+            break;
+          case error.TIMEOUT:
+            errorMessage = 'Location request timed out.';
+            break;
+          default:
+            errorMessage = 'An unknown error occurred.';
+        }
+        setLocationError(errorMessage);
+        setGettingLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  };
+
+  const openGoogleMaps = () => {
+    if (!destination.trim()) {
+      alert('Please enter a destination');
       return;
     }
 
-    const start = delhiLocations.find(loc => loc.name === startLocation);
-    const end = delhiLocations.find(loc => loc.name === endLocation);
-
-    if (!start || !end) return;
-
-    setRouteLoading(true);
-    try {
-      const response = await axios.post(`${API}/routes/safe`, {
-        start_lat: start.lat,
-        start_lng: start.lng,
-        end_lat: end.lat,
-        end_lng: end.lng
-      });
-      setSafeRoute(response.data);
-    } catch (error) {
-      console.error('Error calculating route:', error);
-      alert('Failed to calculate safe route. Please try again.');
-    } finally {
-      setRouteLoading(false);
+    if (!currentLocation) {
+      alert('Current location not available. Please allow location access.');
+      return;
     }
+
+    // Create Google Maps URL with directions
+    const origin = `${currentLocation.lat},${currentLocation.lng}`;
+    const dest = encodeURIComponent(destination);
+    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&travelmode=driving`;
+
+    // Open in new tab
+    window.open(googleMapsUrl, '_blank');
   };
 
   return (
     <div className="min-h-screen bg-slate-50" data-testid="directions-page">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header Section */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
@@ -73,156 +91,150 @@ export default function GetDirections() {
             </div>
             <div>
               <h1 className="text-4xl font-bold font-['Manrope'] text-slate-900" data-testid="directions-title">
-                Safe Route Planner
+                Get Directions
               </h1>
             </div>
           </div>
           <p className="text-slate-600 text-lg" data-testid="directions-subtitle">
-            Find the cleanest air quality routes between locations in Delhi NCR
+            Navigate to your destination using Google Maps
           </p>
         </div>
 
         {/* Info Banner */}
-        <div className="bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-200 rounded-xl p-6 mb-8">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 mb-8">
           <div className="flex items-start gap-4">
-            <Route className="h-6 w-6 text-teal-600 flex-shrink-0 mt-1" />
+            <MapPin className="h-6 w-6 text-blue-600 flex-shrink-0 mt-1" />
             <div>
-              <h3 className="font-semibold font-['Manrope'] text-teal-900 mb-2">Smart Route Planning</h3>
-              <p className="text-teal-800 text-sm leading-relaxed">
-                Our AI analyzes real-time air quality data across multiple monitoring stations to suggest routes 
-                with the best air quality. Perfect for cyclists, joggers, and anyone concerned about air pollution exposure.
+              <h3 className="font-semibold font-['Manrope'] text-blue-900 mb-2">Real-Time Navigation</h3>
+              <p className="text-blue-800 text-sm leading-relaxed">
+                Enter your destination and we'll open Google Maps with directions from your current location. 
+                Make sure location access is enabled for the best experience.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Route Calculator */}
-        <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-8" data-testid="route-calculator">
-          <h2 className="text-2xl font-semibold font-['Manrope'] mb-6 flex items-center gap-2">
-            <MapPin className="h-6 w-6 text-teal-600" />
-            Calculate Safe Route
+        {/* Current Location Status */}
+        <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-6">
+          <h2 className="text-xl font-semibold font-['Manrope'] mb-4 flex items-center gap-2">
+            <MapPin className="h-5 w-5 text-teal-600" />
+            Your Location
           </h2>
           
-          <div className="grid md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2" data-testid="start-label">
-                Start Location
-              </label>
-              <select
-                value={startLocation}
-                onChange={(e) => setStartLocation(e.target.value)}
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
-                data-testid="start-location-select"
-              >
-                <option value="">Select start location</option>
-                {delhiLocations.map((loc) => (
-                  <option key={loc.name} value={loc.name}>
-                    {loc.name}
-                  </option>
-                ))}
-              </select>
+          {gettingLocation && (
+            <div className="flex items-center gap-3 text-blue-600">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <span>Detecting your current location...</span>
             </div>
+          )}
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2" data-testid="end-label">
-                End Location
-              </label>
-              <select
-                value={endLocation}
-                onChange={(e) => setEndLocation(e.target.value)}
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
-                data-testid="end-location-select"
-              >
-                <option value="">Select end location</option>
-                {delhiLocations.map((loc) => (
-                  <option key={loc.name} value={loc.name}>
-                    {loc.name}
-                  </option>
-                ))}
-              </select>
+          {locationError && (
+            <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-red-800 font-medium mb-1">Location Error</p>
+                <p className="text-red-700 text-sm">{locationError}</p>
+                <button
+                  onClick={getCurrentLocation}
+                  className="mt-3 text-sm text-red-700 hover:text-red-800 font-medium underline"
+                >
+                  Try Again
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
-          <button
-            onClick={calculateRoute}
-            disabled={routeLoading || !startLocation || !endLocation}
-            className="w-full md:w-auto bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white rounded-full px-8 py-3 font-medium transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            data-testid="calculate-route-button"
-          >
-            {routeLoading ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin" />
-                Calculating...
-              </>
-            ) : (
-              <>
-                <Navigation className="h-5 w-5" />
-                Find Safe Route
-              </>
-            )}
-          </button>
+          {currentLocation && !gettingLocation && (
+            <div className="flex items-start gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5">✓</div>
+              <div className="flex-1">
+                <p className="text-green-800 font-medium mb-1">Location detected</p>
+                <p className="text-green-700 text-sm">
+                  Latitude: {currentLocation.lat.toFixed(6)}, Longitude: {currentLocation.lng.toFixed(6)}
+                </p>
+                <button
+                  onClick={getCurrentLocation}
+                  className="mt-2 text-sm text-green-700 hover:text-green-800 font-medium underline"
+                >
+                  Refresh Location
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Route Result */}
-        {safeRoute && (
-          <div className="space-y-6">
-            <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-6">
-              <h3 className="text-xl font-semibold font-['Manrope'] mb-4" data-testid="route-details-title">
-                Route Details
-              </h3>
-              <div className="grid md:grid-cols-3 gap-6">
-                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg p-4">
-                  <div className="text-sm text-emerald-700 font-medium mb-1">Distance</div>
-                  <div className="text-3xl font-bold font-['Manrope'] text-emerald-900">
-                    {safeRoute.distance ? safeRoute.distance.toFixed(1) : 'N/A'}
-                  </div>
-                  <div className="text-sm text-emerald-600 mt-1">kilometers</div>
-                </div>
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4">
-                  <div className="text-sm text-blue-700 font-medium mb-1">Avg. AQI</div>
-                  <div className="text-3xl font-bold font-['Manrope'] text-blue-900">
-                    {safeRoute.avg_aqi ? Math.round(safeRoute.avg_aqi) : 'N/A'}
-                  </div>
-                  <div className="text-sm text-blue-600 mt-1">along route</div>
-                </div>
-                <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-lg p-4">
-                  <div className="text-sm text-teal-700 font-medium mb-1">Quality</div>
-                  <div className="text-2xl font-bold font-['Manrope'] text-teal-900 capitalize">
-                    {safeRoute.quality || 'N/A'}
-                  </div>
-                  <div className="text-sm text-teal-600 mt-1">route rating</div>
-                </div>
-              </div>
+        {/* Destination Input */}
+        <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-6" data-testid="route-calculator">
+          <h2 className="text-xl font-semibold font-['Manrope'] mb-4 flex items-center gap-2">
+            <Navigation className="h-5 w-5 text-teal-600" />
+            Enter Destination
+          </h2>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Where do you want to go?
+              </label>
+              <input
+                type="text"
+                value={destination}
+                onChange={(e) => setDestination(e.target.value)}
+                placeholder="Enter destination address or place name"
+                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                data-testid="destination-input"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    openGoogleMaps();
+                  }
+                }}
+              />
+              <p className="text-xs text-slate-500 mt-2">
+                Examples: "Connaught Place, Delhi" or "India Gate" or "Saket Mall"
+              </p>
             </div>
 
-            <SafeRouteMap route={safeRoute} />
+            <button
+              onClick={openGoogleMaps}
+              disabled={!destination.trim() || !currentLocation}
+              className="w-full bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white rounded-full px-8 py-3 font-medium transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              data-testid="open-maps-button"
+            >
+              <ExternalLink className="h-5 w-5" />
+              Open in Google Maps
+            </button>
           </div>
-        )}
+        </div>
 
-        {/* Features Section */}
-        <div className="mt-8 bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        {/* Info Section */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
           <h3 className="text-xl font-semibold font-['Manrope'] mb-4">How It Works</h3>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="bg-teal-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-                <span className="text-2xl">🗺️</span>
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="bg-teal-100 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-lg">1️⃣</span>
               </div>
-              <h4 className="font-semibold text-slate-900 mb-2">Real-Time Analysis</h4>
-              <p className="text-sm text-slate-600">We analyze current AQI data from monitoring stations along potential routes</p>
+              <div>
+                <h4 className="font-semibold text-slate-900 mb-1">Allow Location Access</h4>
+                <p className="text-sm text-slate-600">We automatically detect your current location for accurate directions</p>
+              </div>
             </div>
-            <div className="text-center">
-              <div className="bg-emerald-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-                <span className="text-2xl">🧠</span>
+            <div className="flex items-start gap-3">
+              <div className="bg-blue-100 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-lg">2️⃣</span>
               </div>
-              <h4 className="font-semibold text-slate-900 mb-2">Smart Algorithm</h4>
-              <p className="text-sm text-slate-600">AI optimizes routes to minimize pollution exposure while keeping distance reasonable</p>
+              <div>
+                <h4 className="font-semibold text-slate-900 mb-1">Enter Destination</h4>
+                <p className="text-sm text-slate-600">Type the address or place name where you want to go</p>
+              </div>
             </div>
-            <div className="text-center">
-              <div className="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-                <span className="text-2xl">✅</span>
+            <div className="flex items-start gap-3">
+              <div className="bg-emerald-100 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-lg">3️⃣</span>
               </div>
-              <h4 className="font-semibold text-slate-900 mb-2">Best Path</h4>
-              <p className="text-sm text-slate-600">Get a route with the cleanest air quality for your journey</p>
+              <div>
+                <h4 className="font-semibold text-slate-900 mb-1">Navigate with Google Maps</h4>
+                <p className="text-sm text-slate-600">Click the button to open Google Maps in a new tab with turn-by-turn directions</p>
+              </div>
             </div>
           </div>
         </div>
