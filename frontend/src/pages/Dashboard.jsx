@@ -84,11 +84,6 @@ export default function Dashboard() {
           {aqiData && <AQICard aqi={aqiData.aqi} location={aqiData.location} pollutants={aqiData.pollutants} size="large" />}
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6 mb-8">
-          {forecast && aqiData && <ForecastChart forecast={forecast} currentAQI={aqiData.aqi} />}
-          {sources && <SourceContribution sources={sources} />}
-        </div>
-
         <div className="mb-8">
           {aqiData && <PollutantBar pollutants={aqiData.pollutants} />}
         </div>
@@ -97,68 +92,44 @@ export default function Dashboard() {
           <MapView />
         </div>
 
-        <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-8" data-testid="route-calculator">
-          <h3 className="text-xl font-semibold font-['Manrope'] mb-4 flex items-center gap-2">
-            <Navigation className="h-5 w-5 text-teal-700" />
-            Safe Route Recommendation
-          </h3>
-          <p className="text-sm text-slate-600 mb-6">
-            Get route recommendations based on real-time AQI levels to minimize pollution exposure.
-          </p>
-
-          <div className="grid md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2" htmlFor="start-location">
-                Start Location
-              </label>
-              <select
-                id="start-location"
-                className="w-full bg-slate-50 border-slate-200 focus:ring-2 focus:ring-slate-900 focus:border-transparent rounded-lg p-3"
-                value={startLocation}
-                onChange={(e) => setStartLocation(e.target.value)}
-                data-testid="start-location-select"
-              >
-                <option value="">Select start location</option>
-                {delhiLocations.map((loc) => (
-                  <option key={loc.name} value={loc.name}>{loc.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2" htmlFor="end-location">
-                Destination
-              </label>
-              <select
-                id="end-location"
-                className="w-full bg-slate-50 border-slate-200 focus:ring-2 focus:ring-slate-900 focus:border-transparent rounded-lg p-3"
-                value={endLocation}
-                onChange={(e) => setEndLocation(e.target.value)}
-                data-testid="end-location-select"
-              >
-                <option value="">Select destination</option>
-                {delhiLocations.map((loc) => (
-                  <option key={loc.name} value={loc.name}>{loc.name}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <button
-            onClick={calculateRoute}
-            disabled={routeLoading}
-            className="bg-teal-700 hover:bg-teal-600 text-white rounded-full px-8 py-3 font-medium transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-            data-testid="calculate-route-button"
+        {/* Quick Action Cards */}
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          <Link
+            to="/prediction"
+            className="bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl p-6 text-white hover:shadow-xl transition-all group"
+            data-testid="prediction-card"
           >
-            {routeLoading ? 'Calculating...' : 'Calculate Safe Route'}
-          </button>
-        </div>
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-xl font-semibold font-['Manrope'] mb-2 group-hover:translate-x-1 transition-transform">
+                  View AI Predictions
+                </h3>
+                <p className="text-purple-100 text-sm">
+                  See 48-72 hour forecasts and pollution source analysis
+                </p>
+              </div>
+              <TrendingUp className="h-8 w-8 opacity-80" />
+            </div>
+          </Link>
 
-        {safeRoute && (
-          <div className="mb-8">
-            <SafeRouteMap route={safeRoute} />
-          </div>
-        )}
+          <Link
+            to="/directions"
+            className="bg-gradient-to-br from-teal-600 to-teal-700 rounded-xl p-6 text-white hover:shadow-xl transition-all group"
+            data-testid="directions-card"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-xl font-semibold font-['Manrope'] mb-2 group-hover:translate-x-1 transition-transform">
+                  Get Safe Routes
+                </h3>
+                <p className="text-teal-100 text-sm">
+                  Find routes with the best air quality for your journey
+                </p>
+              </div>
+              <Navigation className="h-8 w-8 opacity-80" />
+            </div>
+          </Link>
+        </div>
       </div>
 
       <Footer />
