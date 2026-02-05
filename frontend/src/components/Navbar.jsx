@@ -112,6 +112,30 @@ export const Navbar = ({ isAdmin = false }) => {
                   Dashboard
                 </Link>
                 <Link
+                  to="/prediction"
+                  className="block py-2 text-slate-700 hover:text-teal-700 font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                  data-testid="mobile-prediction-link"
+                >
+                  Predictions
+                </Link>
+                <Link
+                  to="/directions"
+                  className="block py-2 text-slate-700 hover:text-teal-700 font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                  data-testid="mobile-directions-link"
+                >
+                  Get Directions
+                </Link>
+                <Link
+                  to="/about"
+                  className="block py-2 text-slate-700 hover:text-teal-700 font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                  data-testid="mobile-about-link"
+                >
+                  About
+                </Link>
+                <Link
                   to="/report"
                   className="block py-2 text-slate-700 hover:text-teal-700 font-medium"
                   onClick={() => setMobileMenuOpen(false)}
@@ -125,7 +149,7 @@ export const Navbar = ({ isAdmin = false }) => {
                   onClick={() => setMobileMenuOpen(false)}
                   data-testid="mobile-admin-login-link"
                 >
-                  Admin Login
+                  Admin
                 </Link>
               </>
             ) : (
