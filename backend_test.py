@@ -256,7 +256,7 @@ class APITester:
                 # Check for expected data sources
                 source_names = [s.get("name", "") for s in data_sources]
                 expected_sources = ["CPCB", "WAQI", "Satellite", "Weather"]
-                found_sources = [name for name in expected_sources if any(exp in name for exp in source_names)]
+                found_sources = [exp for exp in expected_sources if any(exp in name for name in source_names)]
                 
                 if len(found_sources) >= 3:
                     self.log_result("/model/transparency", "Expected data sources", True, f"Found: {found_sources}")
