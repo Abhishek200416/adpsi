@@ -103,17 +103,20 @@
 #====================================================================================================
 
 user_problem_statement: |
-  WEBSITE FEATURE UPDATE - Delhi Air Command web application enhancement to align with AICTE problem statement
-  "AI-Driven Pollution Source Identification, Forecasting & Policy Dashboard for Delhi NCR."
+  ML MODEL INTEGRATION - Integrate trained ML models for AQI forecasting and pollution source attribution
   
-  Features to add:
-  1. Pollution Heatmap Mode - Toggle between marker and heatmap view on maps
-  2. AI Recommendation Assistant - For citizens and policymakers with contextual guidance
-  3. Forecast-Based Alerts Section - 48-72h alerts with risk levels and affected groups
-  4. Analytical Insights Summary - Auto-generated insights from predictions
-  5. Data & Model Transparency Panel - Explain data sources and ML upgrade path
-  
-  Gemini API Key provided: AIzaSyBNWOPc0RaYLMEW-UDTrYe5CJZ-oe4mUgk
+  Requirements:
+  1. Replace simulation-based predictions with actual ML models
+  2. Model 1 (AQI Forecasting): XGBoost ensemble with 5 boosters
+     - Files: artifact_wrapper.pkl, booster_seed42-86.json, ensemble_metadata.json
+     - Location: /app/backend/ml_models/model1/
+  3. Model 2 (Source Attribution): Random Forest regression model
+     - File: pollution_source_regression_model.pkl
+     - Location: /app/backend/ml_models/model2/
+  4. Create SQLite database with ORM models (PostgreSQL compatible)
+  5. Remove OpenWeather API dependency
+  6. Show appropriate messages in frontend when models are not configured
+  7. Update transparency endpoint to reflect ML model status
 
 backend:
   - task: "Add heatmap data endpoint (/api/aqi/heatmap)"
