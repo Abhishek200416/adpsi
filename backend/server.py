@@ -332,30 +332,51 @@ async def calculate_safe_route(route_req: SafeRouteRequest):
 
 @api_router.post("/policy/impact", response_model=PolicyImpactResponse)
 async def calculate_policy_impact(policy_req: PolicyImpactRequest):
+    """Calculate policy impact with reasoning and recommendations"""
+    
+    # Get current AQI to provide context-aware recommendations
+    try:
+        aqi_data = await get_current_aqi()
+        current_aqi = aqi_data.aqi
+    except:
+        current_aqi = 200  # Default moderate-high AQI
+    
     policy_impacts = {
         'odd_even': {
             'reduction': 15 * policy_req.intensity,
             'timeline': 7,
             'sources': ['traffic'],
-            'description': 'Odd-Even vehicle policy reduces traffic emissions significantly during implementation.'
+            'description': 'Odd-Even vehicle policy reduces traffic emissions significantly during implementation.',
+            'reasoning': lambda aqi: f"Given the current AQI of {aqi}, traffic contributes ~30-35% of pollution. Implementing Odd-Even at {int(policy_req.intensity*100)}% intensity can reduce vehicular emissions by restricting half the vehicles on roads. This policy is most effective during high-traffic hours and works best when combined with improved public transport.",
+            'confidence': 'high' if policy_req.intensity > 0.7 else 'medium',
+            'confidence_explanation': 'Historical data from Delhi shows 10-20% AQI reduction during strict Odd-Even implementation.'
         },
         'construction_halt': {
             'reduction': 20 * policy_req.intensity,
             'timeline': 3,
             'sources': ['construction'],
-            'description': 'Halting construction activities immediately reduces dust pollution.'
+            'description': 'Halting construction activities immediately reduces dust pollution.',
+            'reasoning': lambda aqi: f"Construction dust contributes ~20-25% to current pollution levels (AQI: {aqi}). A {int(policy_req.intensity*100)}% halt in construction activities will have immediate impact within 2-3 days as suspended dust particles settle. Most effective during dry, low-wind conditions.",
+            'confidence': 'high' if policy_req.intensity > 0.8 else 'medium',
+            'confidence_explanation': 'Direct reduction in PM10 and PM2.5 levels observed within days of implementation.'
         },
         'firecracker_ban': {
             'reduction': 25 * policy_req.intensity,
             'timeline': 2,
             'sources': ['traffic', 'industry'],
-            'description': 'Firecracker ban during festivals prevents severe AQI spikes.'
+            'description': 'Firecracker ban during festivals prevents severe AQI spikes.',
+            'reasoning': lambda aqi: f"During festive periods, firecracker use can spike AQI by 200-300 points overnight (current: {aqi}). A {int(policy_req.intensity*100)}% effective ban prevents this acute deterioration. Impact is immediate but short-term (2-3 days). Requires strong enforcement and public cooperation.",
+            'confidence': 'medium',
+            'confidence_explanation': 'Effectiveness depends heavily on public compliance and enforcement strength.'
         },
         'stubble_control': {
             'reduction': 30 * policy_req.intensity,
             'timeline': 14,
             'sources': ['stubble_burning'],
-            'description': 'Incentivizing farmers to avoid stubble burning has long-term seasonal impact.'
+            'description': 'Incentivizing farmers to avoid stubble burning has long-term seasonal impact.',
+            'reasoning': lambda aqi: f"Stubble burning in Oct-Nov contributes 25-40% to Delhi's AQI (current: {aqi}). At {int(policy_req.intensity*100)}% effectiveness, this policy prevents agricultural fires but requires sustained farmer engagement and alternative crop management solutions. Benefits accumulate over 2-3 weeks as burning season progresses.",
+            'confidence': 'medium' if policy_req.intensity > 0.6 else 'low',
+            'confidence_explanation': 'Long-term solution requiring multi-state coordination and farmer incentives. Effects take time to materialize.'
         }
     }
     
@@ -365,8 +386,126 @@ async def calculate_policy_impact(policy_req: PolicyImpactRequest):
         estimated_reduction=round(impact['reduction'], 1),
         timeline_days=impact['timeline'],
         affected_sources=impact['sources'],
-        description=impact['description']
+        description=impact['description'],
+        recommendation_reasoning=impact['reasoning'](current_aqi),
+        confidence_level=impact['confidence'],
+        confidence_explanation=impact['confidence_explanation']
     )
+
+@api_router.get("/health-advisory")
+async def get_health_advisory(aqi: Optional[float] = None) -> HealthAdvisory:
+    """Get rule-based health advisory tied to AQI categories"""
+    
+    if aqi is None:
+        aqi_data = await get_current_aqi()
+        aqi = aqi_data.aqi
+    
+    if aqi <= 50:
+        return HealthAdvisory(
+            aqi_level="Good (0-50)",
+            health_impact="Air quality is satisfactory, and air pollution poses little or no risk.",
+            recommendations=[
+                "Enjoy outdoor activities",
+                "No restrictions needed",
+                "Ideal conditions for exercise and outdoor sports"
+            ],
+            vulnerable_groups=["None - safe for everyone"],
+            outdoor_activity="Unrestricted - all outdoor activities safe"
+        )
+    elif aqi <= 100:
+        return HealthAdvisory(
+            aqi_level="Moderate (51-100)",
+            health_impact="Air quality is acceptable. However, there may be a risk for some people, particularly those who are unusually sensitive to air pollution.",
+            recommendations=[
+                "Unusually sensitive people should consider limiting prolonged outdoor exertion",
+                "General public can enjoy outdoor activities with normal precautions",
+                "Monitor air quality if you have respiratory conditions"
+            ],
+            vulnerable_groups=["People with respiratory diseases", "Unusually sensitive individuals"],
+            outdoor_activity="Generally safe - sensitive groups should monitor symptoms"
+        )
+    elif aqi <= 150:
+        return HealthAdvisory(
+            aqi_level="Unhealthy for Sensitive Groups (101-150)",
+            health_impact="Members of sensitive groups may experience health effects. The general public is less likely to be affected.",
+            recommendations=[
+                "Sensitive groups should limit prolonged outdoor exertion",
+                "Consider wearing N95 masks for extended outdoor activities",
+                "Keep windows closed during high pollution hours",
+                "Use air purifiers indoors if available"
+            ],
+            vulnerable_groups=[
+                "Children and elderly",
+                "People with asthma or respiratory diseases",
+                "People with heart disease",
+                "Pregnant women"
+            ],
+            outdoor_activity="Moderate - sensitive groups should reduce outdoor exposure"
+        )
+    elif aqi <= 200:
+        return HealthAdvisory(
+            aqi_level="Unhealthy (151-200)",
+            health_impact="Everyone may begin to experience health effects. Members of sensitive groups may experience more serious health effects.",
+            recommendations=[
+                "Everyone should reduce prolonged or heavy outdoor exertion",
+                "Wear N95 masks when going outdoors",
+                "Avoid outdoor activities during peak pollution hours (7-10 AM, 6-9 PM)",
+                "Use air purifiers and keep indoor air clean",
+                "Stay hydrated and monitor health symptoms"
+            ],
+            vulnerable_groups=[
+                "Children and elderly",
+                "People with respiratory or heart conditions",
+                "Pregnant women",
+                "Outdoor workers"
+            ],
+            outdoor_activity="Unhealthy - limit outdoor activities, especially prolonged exertion"
+        )
+    elif aqi <= 300:
+        return HealthAdvisory(
+            aqi_level="Very Unhealthy (201-300)",
+            health_impact="Health alert: The risk of health effects is increased for everyone. Serious health effects for sensitive groups.",
+            recommendations=[
+                "Everyone should avoid prolonged or heavy outdoor exertion",
+                "Mandatory N95 mask use when outdoors",
+                "Stay indoors as much as possible",
+                "Schools and outdoor events should be cancelled",
+                "Use air purifiers continuously",
+                "Seek medical attention if experiencing breathing difficulties"
+            ],
+            vulnerable_groups=[
+                "Everyone, especially children and elderly",
+                "All people with respiratory or cardiovascular conditions",
+                "Pregnant women",
+                "All outdoor workers should take precautions"
+            ],
+            outdoor_activity="Very Unhealthy - avoid all outdoor activities"
+        )
+    else:  # > 300
+        return HealthAdvisory(
+            aqi_level="Hazardous (300+)",
+            health_impact="Health warning of emergency conditions: everyone is more likely to be affected. Serious aggravation of heart or lung disease.",
+            recommendations=[
+                "Everyone must avoid all outdoor activities",
+                "Stay indoors with windows and doors sealed",
+                "Use N95 masks even indoors if air quality is poor",
+                "Emergency health measures should be in place",
+                "Schools, offices, and public places should close",
+                "Seek immediate medical attention for any respiratory distress",
+                "Use air purifiers on maximum settings"
+            ],
+            vulnerable_groups=[
+                "Entire population at risk",
+                "Critical risk for children, elderly, and people with pre-existing conditions"
+            ],
+            outdoor_activity="Hazardous - complete avoidance of all outdoor exposure mandatory"
+        )
+
+@api_router.get("/seasonal-outlook")
+async def get_seasonal_outlook() -> SeasonalOutlook:
+    """Get seasonal pollution outlook based on historical patterns"""
+    outlook = forecaster.get_seasonal_outlook()
+    return SeasonalOutlook(**outlook)
 
 app.include_router(api_router)
 
