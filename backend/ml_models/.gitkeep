@@ -1,0 +1,4 @@
+# This directory contains ML models
+# Place your model files in:
+# - model1/ for AQI forecasting
+# - model2/ for source attribution
