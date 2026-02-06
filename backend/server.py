@@ -294,13 +294,10 @@ async def get_forecast():
 async def get_pollution_sources():
     try:
         aqi_data = await get_current_aqi()
-        weather_data = {'temp': 28, 'humidity': 65, 'wind_speed': 6}
         
+        # Use ML model prediction
         result = attribution_model.predict(
-            pollutants=aqi_data.pollutants,
-            weather=weather_data,
-            month=datetime.now().month,
-            fire_count=0
+            pollutants=aqi_data.pollutants
         )
         
         return SourceContribution(**result)
