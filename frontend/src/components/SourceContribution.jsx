@@ -30,6 +30,26 @@ const SOURCE_DESCRIPTIONS = {
 };
 
 export const SourceContribution = ({ sources }) => {
+  // Handle ML model not loaded state
+  if (sources && sources.prediction_type === 'not_loaded') {
+    return (
+      <div className="bg-white border-2 border-amber-200 shadow-sm rounded-xl p-6">
+        <div className="mb-4">
+          <h3 className="text-xl font-semibold font-['Manrope'] mb-2 text-amber-900">
+            Pollution Source Attribution
+          </h3>
+        </div>
+        <div className="bg-amber-50 border border-amber-300 rounded-lg p-6 text-center">
+          <Factory className="h-12 w-12 text-amber-500 mx-auto mb-3" />
+          <h4 className="font-semibold text-amber-900 mb-2">ML Model Not Configured</h4>
+          <p className="text-sm text-amber-800">
+            {sources.message || 'Source attribution model is not available. Please upload model files to enable predictions.'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const data = Object.entries(sources.contributions)
     .map(([key, value]) => ({
       name: SOURCE_LABELS[key] || key,
