@@ -73,14 +73,59 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {healthRec && (
-          <div className={`bg-white border-l-4 ${healthRec.color.replace('text-', 'border-')} rounded-xl p-6 mb-8 shadow-sm`} data-testid="health-recommendation">
-            <div className="flex items-start gap-4">
+        {healthRec && healthAdvisory && (
+          <div className={`bg-white border-l-4 ${healthRec.borderColor} rounded-xl p-6 mb-8 shadow-sm`} data-testid="health-recommendation">
+            <div className="flex items-start gap-4 mb-4">
               <span className="text-3xl">{healthRec.icon}</span>
-              <div>
-                <h3 className="font-semibold font-['Manrope'] mb-1">Health Advisory</h3>
-                <p className={`${healthRec.color}`}>{healthRec.text}</p>
+              <div className="flex-1">
+                <h3 className="font-semibold font-['Manrope'] mb-1 text-lg">Health Advisory - {healthAdvisory.aqi_level}</h3>
+                <p className={`${healthRec.color} font-medium`}>{healthRec.text}</p>
               </div>
+            </div>
+
+            {/* Enhanced Health Advisory Details */}
+            <div className="grid md:grid-cols-2 gap-6 mt-6 pt-6 border-t border-slate-200">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <ShieldAlert className="h-5 w-5 text-blue-600" />
+                  <h4 className="font-semibold text-slate-900">Recommendations</h4>
+                </div>
+                <ul className="space-y-2">
+                  {healthAdvisory.recommendations.map((rec, idx) => (
+                    <li key={idx} className="flex items-start gap-2 text-sm text-slate-600">
+                      <span className={`${healthRec.color} font-bold mt-1`}>•</span>
+                      <span>{rec}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Users className="h-5 w-5 text-purple-600" />
+                  <h4 className="font-semibold text-slate-900">Vulnerable Groups</h4>
+                </div>
+                <ul className="space-y-2">
+                  {healthAdvisory.vulnerable_groups.map((group, idx) => (
+                    <li key={idx} className="flex items-start gap-2 text-sm text-slate-600">
+                      <span className="text-purple-600 font-bold mt-1">•</span>
+                      <span>{group}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-4 pt-4 border-t border-slate-100">
+                  <div className="text-xs font-medium text-slate-500 mb-1">Outdoor Activity</div>
+                  <div className={`text-sm font-semibold ${healthRec.color}`}>
+                    {healthAdvisory.outdoor_activity}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-slate-200">
+              <p className="text-xs text-slate-500 italic">
+                <strong>Health Impact:</strong> {healthAdvisory.health_impact}
+              </p>
             </div>
           </div>
         )}
