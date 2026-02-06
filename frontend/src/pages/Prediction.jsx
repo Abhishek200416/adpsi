@@ -78,17 +78,28 @@ export default function Prediction() {
           <div className="flex items-start gap-4">
             <TrendingUp className="h-6 w-6 text-purple-600 flex-shrink-0 mt-1" />
             <div>
-              <h3 className="font-semibold font-['Manrope'] text-purple-900 mb-2">Advanced ML Forecasting</h3>
+              <h3 className="font-semibold font-['Manrope'] text-purple-900 mb-2">Advanced ML-Ready Forecasting</h3>
               <p className="text-purple-800 text-sm leading-relaxed">
-                Our AI models analyze historical data, weather patterns, traffic conditions, and industrial activity 
-                to predict air quality trends up to 72 hours in advance. Use these insights to plan outdoor activities 
-                and take preventive health measures.
+                Our system analyzes real-time AQI, weather patterns, traffic conditions, and seasonal factors 
+                to predict air quality trends up to 72 hours in advance. The simulation-based approach is designed 
+                to seamlessly transition to machine learning models when available.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Forecast Section */}
+        {/* Prediction Explanation Section - NEW */}
+        {forecast && (
+          <div className="mb-8">
+            <PredictionExplanation 
+              explanation={forecast.explanation}
+              trend={forecast.trend}
+              weatherConditions={forecast.weather_conditions}
+            />
+          </div>
+        )}
+
+        {/* Forecast Section with Confidence */}
         <div className="mb-8">
           {forecast && aqiData && (
             <div className="space-y-6">
@@ -100,7 +111,7 @@ export default function Prediction() {
                   <AlertCircle className="h-5 w-5 text-blue-600" />
                   Forecast Details
                 </h3>
-                <div className="grid md:grid-cols-3 gap-6">
+                <div className="grid md:grid-cols-3 gap-6 mb-6">
                   <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4">
                     <div className="text-sm text-blue-700 font-medium mb-1">48-Hour Forecast</div>
                     <div className="text-3xl font-bold font-['Manrope'] text-blue-900">{Math.round(forecast.aqi_48h)}</div>
@@ -114,18 +125,53 @@ export default function Prediction() {
                   <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4">
                     <div className="text-sm text-purple-700 font-medium mb-1">Trend</div>
                     <div className="text-2xl font-bold font-['Manrope'] text-purple-900 capitalize">{forecast.trend}</div>
-                    <div className="text-sm text-purple-600 mt-1">{Math.round(forecast.confidence * 100)}% Confidence</div>
+                    <div className="text-sm text-purple-600 mt-1">{Math.round(forecast.confidence)}% Confidence</div>
                   </div>
                 </div>
+
+                {/* Confidence Indicator - NEW */}
+                <ConfidenceIndicator 
+                  level={forecast.confidence_level}
+                  score={forecast.confidence}
+                  explanation={forecast.confidence_explanation}
+                />
               </div>
             </div>
           )}
         </div>
 
-        {/* Source Attribution Section */}
+        {/* Seasonal Pollution Outlook - NEW */}
+        {seasonalOutlook && (
+          <div className="mb-8">
+            <SeasonalOutlook seasonalData={seasonalOutlook} />
+          </div>
+        )}
+
+        {/* Source Attribution Section with Confidence */}
         <div className="mb-8">
-          {sources && <SourceContribution sources={sources} />}
+          {sources && (
+            <div className="space-y-6">
+              <SourceContribution sources={sources} />
+              
+              {/* Source Confidence - NEW */}
+              <ConfidenceIndicator 
+                level={sources.confidence_level}
+                score={sources.confidence}
+                explanation={sources.confidence_explanation}
+              />
+            </div>
+          )}
         </div>
+
+        {/* Methodology Section - NEW */}
+        {forecast && (
+          <div className="mb-8">
+            <MethodologySection 
+              predictionType={forecast.prediction_type}
+              modelVersion={forecast.model_version}
+            />
+          </div>
+        )}
 
         {/* Methodology Section */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
