@@ -6,13 +6,14 @@ import { Footer } from '../components/Footer';
 import { AQICard } from '../components/AQICard';
 import { PollutantBar } from '../components/PollutantBar';
 import { MapView } from '../components/MapView';
-import { Loader2, TrendingUp, Navigation } from 'lucide-react';
+import { Loader2, TrendingUp, Navigation, ShieldAlert, Users } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 export default function Dashboard() {
   const [aqiData, setAqiData] = useState(null);
+  const [healthAdvisory, setHealthAdvisory] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,8 +22,12 @@ export default function Dashboard() {
 
   const fetchData = async () => {
     try {
-      const aqiRes = await axios.get(`${API}/aqi/current`);
+      const [aqiRes, healthRes] = await Promise.all([
+        axios.get(`${API}/aqi/current`),
+        axios.get(`${API}/health-advisory`)
+      ]);
       setAqiData(aqiRes.data);
+      setHealthAdvisory(healthRes.data);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -32,15 +37,15 @@ export default function Dashboard() {
 
   const getHealthRecommendation = (aqi) => {
     if (aqi <= 50) {
-      return { text: 'Air quality is good. Enjoy outdoor activities!', icon: '🌿', color: 'text-emerald-600' };
+      return { text: 'Air quality is good. Enjoy outdoor activities!', icon: '🌿', color: 'text-emerald-600', borderColor: 'border-emerald-600' };
     } else if (aqi <= 100) {
-      return { text: 'Air quality is acceptable. Sensitive groups should limit prolonged outdoor exertion.', icon: '⚠️', color: 'text-amber-600' };
+      return { text: 'Air quality is acceptable. Sensitive groups should limit prolonged outdoor exertion.', icon: '⚠️', color: 'text-amber-600', borderColor: 'border-amber-600' };
     } else if (aqi <= 150) {
-      return { text: 'Unhealthy for sensitive groups. Consider reducing outdoor activities.', icon: '😷', color: 'text-orange-600' };
+      return { text: 'Unhealthy for sensitive groups. Consider reducing outdoor activities.', icon: '😷', color: 'text-orange-600', borderColor: 'border-orange-600' };
     } else if (aqi <= 200) {
-      return { text: 'Unhealthy. Everyone should reduce outdoor activities. Wear N95 masks.', icon: '🚨', color: 'text-red-600' };
+      return { text: 'Unhealthy. Everyone should reduce outdoor activities. Wear N95 masks.', icon: '🚨', color: 'text-red-600', borderColor: 'border-red-600' };
     } else {
-      return { text: 'Very unhealthy or hazardous. Avoid outdoor activities. Stay indoors.', icon: '☠️', color: 'text-red-800' };
+      return { text: 'Very unhealthy or hazardous. Avoid outdoor activities. Stay indoors.', icon: '☠️', color: 'text-red-800', borderColor: 'border-red-800' };
     }
   };
 
