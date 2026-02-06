@@ -4,6 +4,10 @@ import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { ForecastChart } from '../components/ForecastChart';
 import { SourceContribution } from '../components/SourceContribution';
+import { ConfidenceIndicator } from '../components/ConfidenceIndicator';
+import { PredictionExplanation } from '../components/PredictionExplanation';
+import { SeasonalOutlook } from '../components/SeasonalOutlook';
+import { MethodologySection } from '../components/MethodologySection';
 import { TrendingUp, Brain, AlertCircle, Loader2 } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -13,6 +17,7 @@ export default function Prediction() {
   const [aqiData, setAqiData] = useState(null);
   const [forecast, setForecast] = useState(null);
   const [sources, setSources] = useState(null);
+  const [seasonalOutlook, setSeasonalOutlook] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,14 +26,16 @@ export default function Prediction() {
 
   const fetchData = async () => {
     try {
-      const [aqiRes, forecastRes, sourcesRes] = await Promise.all([
+      const [aqiRes, forecastRes, sourcesRes, seasonalRes] = await Promise.all([
         axios.get(`${API}/aqi/current`),
         axios.get(`${API}/aqi/forecast`),
-        axios.get(`${API}/aqi/sources`)
+        axios.get(`${API}/aqi/sources`),
+        axios.get(`${API}/seasonal-outlook`)
       ]);
       setAqiData(aqiRes.data);
       setForecast(forecastRes.data);
       setSources(sourcesRes.data);
+      setSeasonalOutlook(seasonalRes.data);
     } catch (error) {
       console.error('Error fetching prediction data:', error);
     } finally {
