@@ -150,26 +150,32 @@ export const ForecastChart = ({ forecast, currentAQI }) => {
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4">
-          <div className="text-xs text-blue-700 font-medium mb-1 uppercase tracking-wide">24 Hour Forecast</div>
-          <div className="text-3xl font-bold font-['Manrope'] text-blue-900" data-testid="forecast-24h">
+        <div className={`bg-gradient-to-br ${getAQIBgColor(Math.round((currentAQI + forecast.aqi_48h) / 2))} rounded-lg p-4`}>
+          <div className={`text-xs ${getAQITextColor(Math.round((currentAQI + forecast.aqi_48h) / 2))} font-medium mb-1 uppercase tracking-wide`}>24 Hour Forecast</div>
+          <div className={`text-3xl font-bold font-['Manrope'] ${getAQITextColorDark(Math.round((currentAQI + forecast.aqi_48h) / 2))}`} data-testid="forecast-24h">
             {Math.round((currentAQI + forecast.aqi_48h) / 2)}
           </div>
-          <div className="text-xs text-blue-600 mt-1">AQI Level</div>
+          <div className={`text-xs ${getAQITextColorMedium(Math.round((currentAQI + forecast.aqi_48h) / 2))} mt-1 font-medium`}>
+            {getAQICategory(Math.round((currentAQI + forecast.aqi_48h) / 2))}
+          </div>
         </div>
-        <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200 rounded-lg p-4">
-          <div className="text-xs text-indigo-700 font-medium mb-1 uppercase tracking-wide">48 Hour Forecast</div>
-          <div className="text-3xl font-bold font-['Manrope'] text-indigo-900" data-testid="forecast-48h">
+        <div className={`bg-gradient-to-br ${getAQIBgColor(Math.round(forecast.aqi_48h))} rounded-lg p-4`}>
+          <div className={`text-xs ${getAQITextColor(Math.round(forecast.aqi_48h))} font-medium mb-1 uppercase tracking-wide`}>48 Hour Forecast</div>
+          <div className={`text-3xl font-bold font-['Manrope'] ${getAQITextColorDark(Math.round(forecast.aqi_48h))}`} data-testid="forecast-48h">
             {Math.round(forecast.aqi_48h)}
           </div>
-          <div className="text-xs text-indigo-600 mt-1">AQI Level</div>
+          <div className={`text-xs ${getAQITextColorMedium(Math.round(forecast.aqi_48h))} mt-1 font-medium`}>
+            {getAQICategory(Math.round(forecast.aqi_48h))}
+          </div>
         </div>
-        <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-4">
-          <div className="text-xs text-purple-700 font-medium mb-1 uppercase tracking-wide">72 Hour Forecast</div>
-          <div className="text-3xl font-bold font-['Manrope'] text-purple-900" data-testid="forecast-72h">
+        <div className={`bg-gradient-to-br ${getAQIBgColor(Math.round(forecast.aqi_72h))} rounded-lg p-4`}>
+          <div className={`text-xs ${getAQITextColor(Math.round(forecast.aqi_72h))} font-medium mb-1 uppercase tracking-wide`}>72 Hour Forecast</div>
+          <div className={`text-3xl font-bold font-['Manrope'] ${getAQITextColorDark(Math.round(forecast.aqi_72h))}`} data-testid="forecast-72h">
             {Math.round(forecast.aqi_72h)}
           </div>
-          <div className="text-xs text-purple-600 mt-1">AQI Level</div>
+          <div className={`text-xs ${getAQITextColorMedium(Math.round(forecast.aqi_72h))} mt-1 font-medium`}>
+            {getAQICategory(Math.round(forecast.aqi_72h))}
+          </div>
         </div>
       </div>
 
