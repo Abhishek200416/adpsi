@@ -6,6 +6,7 @@ import { Footer } from '../components/Footer';
 import { AQICard } from '../components/AQICard';
 import { SourceContribution } from '../components/SourceContribution';
 import { ForecastChart } from '../components/ForecastChart';
+import { ConfidenceIndicator } from '../components/ConfidenceIndicator';
 import { FileText, AlertCircle, CheckCircle, Clock, TrendingDown, Loader2 } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
 
