@@ -45,6 +45,51 @@ export default function Prediction() {
     }
   };
 
+  const getAQIBgColor = (aqi) => {
+    if (aqi <= 50) return 'from-emerald-50 to-emerald-100 border-emerald-200';
+    if (aqi <= 100) return 'from-yellow-50 to-yellow-100 border-yellow-200';
+    if (aqi <= 150) return 'from-orange-50 to-orange-100 border-orange-200';
+    if (aqi <= 200) return 'from-red-50 to-red-100 border-red-200';
+    if (aqi <= 300) return 'from-purple-50 to-purple-100 border-purple-200';
+    return 'from-red-900 to-red-950 border-red-900';
+  };
+
+  const getAQITextColor = (aqi) => {
+    if (aqi <= 50) return 'text-emerald-700';
+    if (aqi <= 100) return 'text-yellow-700';
+    if (aqi <= 150) return 'text-orange-700';
+    if (aqi <= 200) return 'text-red-700';
+    if (aqi <= 300) return 'text-purple-700';
+    return 'text-red-100';
+  };
+
+  const getAQITextColorDark = (aqi) => {
+    if (aqi <= 50) return 'text-emerald-900';
+    if (aqi <= 100) return 'text-yellow-900';
+    if (aqi <= 150) return 'text-orange-900';
+    if (aqi <= 200) return 'text-red-900';
+    if (aqi <= 300) return 'text-purple-900';
+    return 'text-white';
+  };
+
+  const getAQITextColorMedium = (aqi) => {
+    if (aqi <= 50) return 'text-emerald-600';
+    if (aqi <= 100) return 'text-yellow-600';
+    if (aqi <= 150) return 'text-orange-600';
+    if (aqi <= 200) return 'text-red-600';
+    if (aqi <= 300) return 'text-purple-600';
+    return 'text-red-200';
+  };
+
+  const getAQICategory = (aqi) => {
+    if (aqi <= 50) return 'Good';
+    if (aqi <= 100) return 'Moderate';
+    if (aqi <= 150) return 'Unhealthy for Sensitive';
+    if (aqi <= 200) return 'Unhealthy';
+    if (aqi <= 300) return 'Very Unhealthy';
+    return 'Hazardous';
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
