@@ -576,6 +576,578 @@ async def get_seasonal_outlook() -> SeasonalOutlook:
     outlook = forecaster.get_seasonal_outlook()
     return SeasonalOutlook(**outlook)
 
+async def get_gemini_response(prompt: str, fallback: str = "Analysis unavailable") -> str:
+    """Helper function to get Gemini AI response with fallback"""
+    if not GEMINI_API_KEY:
+        return fallback
+    
+    try:
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        logger.error(f"Gemini API error: {str(e)}")
+        return fallback
+
+@api_router.get("/aqi/heatmap", response_model=HeatmapResponse)
+async def get_aqi_heatmap():
+    """Get pollution heatmap data for Delhi NCR region"""
+    try:
+        # Get current AQI for base intensity
+        aqi_data = await get_current_aqi()
+        base_aqi = aqi_data.aqi
+        
+        # Generate grid of points around Delhi NCR
+        # Delhi center: 28.6139°N, 77.2090°E
+        center_lat, center_lng = 28.6139, 77.2090
+        points = []
+        
+        # Create a grid with varying intensities simulating pollution hotspots
+        import random
+        random.seed(42)  # For consistent simulation
+        
+        # Define known pollution hotspots
+        hotspots = [
+            {"lat": 28.7041, "lng": 77.1025, "name": "Rohini"},  # High traffic
+            {"lat": 28.5355, "lng": 77.3910, "name": "Noida"},   # Industrial
+            {"lat": 28.4595, "lng": 77.0266, "name": "Gurugram"}, # Commercial
+            {"lat": 28.6517, "lng": 77.2219, "name": "Connaught Place"}, # Central
+            {"lat": 28.5244, "lng": 77.1855, "name": "Nehru Place"}, # Traffic junction
+        ]
+        
+        # Generate heatmap points
+        for hotspot in hotspots:
+            # Add main hotspot point
+            intensity = base_aqi + random.uniform(10, 50)
+            category = "Unhealthy" if intensity > 150 else "Moderate" if intensity > 100 else "Good"
+            
+            points.append(HeatmapPoint(
+                lat=hotspot["lat"],
+                lng=hotspot["lng"],
+                intensity=min(intensity / 500.0, 1.0),  # Normalize to 0-1
+                aqi=round(intensity, 1),
+                category=category
+            ))
+            
+            # Add surrounding points with decreasing intensity
+            for i in range(8):
+                angle = i * 45 * 3.14159 / 180  # Convert to radians
+                distance = random.uniform(0.02, 0.05)  # 2-5 km radius
+                
+                lat_offset = distance * random.uniform(0.8, 1.2)
+                lng_offset = distance * random.uniform(0.8, 1.2)
+                
+                surrounding_aqi = base_aqi + random.uniform(-20, 30)
+                surrounding_intensity = max(0.1, min(surrounding_aqi / 500.0, 1.0))
+                category = "Hazardous" if surrounding_aqi > 300 else "Very Unhealthy" if surrounding_aqi > 200 else "Unhealthy" if surrounding_aqi > 150 else "Moderate"
+                
+                points.append(HeatmapPoint(
+                    lat=hotspot["lat"] + lat_offset * (1 if i < 4 else -1),
+                    lng=hotspot["lng"] + lng_offset * (1 if i % 2 == 0 else -1),
+                    intensity=surrounding_intensity,
+                    aqi=round(surrounding_aqi, 1),
+                    category=category
+                ))
+        
+        return HeatmapResponse(
+            points=points,
+            timestamp=datetime.now(timezone.utc),
+            prediction_type="simulation",
+            model_version="heatmap_v1.0"
+        )
+    except Exception as e:
+        logger.error(f"Error generating heatmap: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate heatmap")
+
+@api_router.get("/recommendations", response_model=RecommendationsResponse)
+async def get_recommendations(user_type: str = "citizen"):
+    """Get AI-powered recommendations based on user type and current conditions"""
+    try:
+        # Get current data
+        aqi_data = await get_current_aqi()
+        forecast_data = await get_forecast()
+        source_data = await get_pollution_sources()
+        
+        current_aqi = aqi_data.aqi
+        trend = forecast_data.trend
+        dominant_source = source_data.dominant_source
+        
+        recommendations = []
+        
+        if user_type == "citizen":
+            # Use Gemini for enhanced recommendations
+            prompt = f"""You are an air quality health advisor for Delhi citizens. Current AQI is {current_aqi} ({aqi_data.category}).
+Trend: {trend}. Dominant pollution source: {dominant_source}.
+
+Generate 4-5 specific, actionable health and safety recommendations. Each recommendation should be:
+1. Practical and specific to Delhi NCR context
+2. Based on the current AQI level and trend
+3. Include best travel times if relevant
+
+Format as JSON array with: title, description, priority (high/medium/low), icon (emoji)"""
+
+            ai_response = await get_gemini_response(prompt, "")
+            
+            # Parse AI response or use fallback
+            if ai_response and "{" in ai_response:
+                try:
+                    import json
+                    import re
+                    json_match = re.search(r'\[.*\]', ai_response, re.DOTALL)
+                    if json_match:
+                        parsed = json.loads(json_match.group())
+                        recommendations = [Recommendation(**rec) for rec in parsed]
+                except:
+                    pass
+            
+            # Fallback recommendations
+            if not recommendations:
+                if current_aqi > 200:
+                    recommendations = [
+                        Recommendation(
+                            title="Stay Indoors",
+                            description="Air quality is very unhealthy. Minimize outdoor exposure and keep windows closed.",
+                            priority="high",
+                            icon="🏠"
+                        ),
+                        Recommendation(
+                            title="Wear N95 Mask",
+                            description="If you must go outside, wear a properly fitted N95 mask to filter harmful particles.",
+                            priority="high",
+                            icon="😷"
+                        ),
+                        Recommendation(
+                            title="Use Air Purifiers",
+                            description="Run air purifiers indoors to maintain clean air. Focus on bedrooms and living areas.",
+                            priority="high",
+                            icon="💨"
+                        ),
+                        Recommendation(
+                            title="Avoid Peak Traffic Hours",
+                            description="Travel pollution peaks between 7-10 AM and 6-9 PM. Plan trips accordingly.",
+                            priority="medium",
+                            icon="🚗"
+                        ),
+                        Recommendation(
+                            title="Monitor Health Symptoms",
+                            description="Watch for breathing difficulties, cough, or irritation. Seek medical help if needed.",
+                            priority="high",
+                            icon="🏥"
+                        )
+                    ]
+                elif current_aqi > 150:
+                    recommendations = [
+                        Recommendation(
+                            title="Limit Outdoor Activities",
+                            description="Reduce prolonged outdoor exercise. Consider indoor alternatives like gyms or yoga.",
+                            priority="high",
+                            icon="🏃"
+                        ),
+                        Recommendation(
+                            title="Best Travel Time: 11 AM - 3 PM",
+                            description="Pollution levels are typically lower during midday. Plan essential travel during this window.",
+                            priority="medium",
+                            icon="⏰"
+                        ),
+                        Recommendation(
+                            title="Keep Emergency Medications Handy",
+                            description="If you have asthma or respiratory conditions, carry your inhaler and medications.",
+                            priority="high",
+                            icon="💊"
+                        ),
+                        Recommendation(
+                            title="Choose Green Routes",
+                            description="Use our Safe Routes feature to find paths through parks and tree-lined areas.",
+                            priority="medium",
+                            icon="🌳"
+                        )
+                    ]
+                else:
+                    recommendations = [
+                        Recommendation(
+                            title="Moderate Exercise Safe",
+                            description="Air quality is acceptable for most people. You can engage in moderate outdoor activities.",
+                            priority="low",
+                            icon="🚴"
+                        ),
+                        Recommendation(
+                            title="Ventilate Your Home",
+                            description="Good time to open windows and let fresh air circulate, especially in the morning.",
+                            priority="low",
+                            icon="🪟"
+                        ),
+                        Recommendation(
+                            title="Stay Informed",
+                            description="Check air quality before planning outdoor activities. Conditions can change quickly.",
+                            priority="medium",
+                            icon="📱"
+                        )
+                    ]
+            
+            context = f"Based on current AQI of {current_aqi} ({aqi_data.category}) with {trend} trend"
+            
+        else:  # policymaker
+            prompt = f"""You are an environmental policy advisor for Delhi government. Current AQI: {current_aqi}.
+Trend: {trend}. Dominant source: {dominant_source}. 48h forecast: {forecast_data.aqi_48h}, 72h: {forecast_data.aqi_72h}.
+
+Generate 4-5 specific policy recommendations with:
+- Immediate actions needed
+- Priority pollution sources to target  
+- Affected zones and vulnerable populations
+- Expected impact timeline
+
+Format as JSON array with: title, description, priority, icon"""
+
+            ai_response = await get_gemini_response(prompt, "")
+            
+            if ai_response and "{" in ai_response:
+                try:
+                    import json
+                    import re
+                    json_match = re.search(r'\[.*\]', ai_response, re.DOTALL)
+                    if json_match:
+                        parsed = json.loads(json_match.group())
+                        recommendations = [Recommendation(**rec) for rec in parsed]
+                except:
+                    pass
+            
+            # Fallback policy recommendations
+            if not recommendations:
+                if current_aqi > 200 or forecast_data.aqi_48h > 200:
+                    recommendations = [
+                        Recommendation(
+                            title="Implement Emergency Response",
+                            description=f"Activate GRAP Stage 3/4. Primary source: {dominant_source}. Consider traffic restrictions and construction halts.",
+                            priority="high",
+                            icon="🚨"
+                        ),
+                        Recommendation(
+                            title="Target Vehicular Emissions",
+                            description="Traffic contributes 30-35% of pollution. Deploy 20% of buses on key routes, enforce Odd-Even if needed.",
+                            priority="high",
+                            icon="🚗"
+                        ),
+                        Recommendation(
+                            title="Construction Activity Control",
+                            description="Halt all non-essential construction. Enforce dust suppression measures on active sites.",
+                            priority="high",
+                            icon="🏗️"
+                        ),
+                        Recommendation(
+                            title="Public Advisory Campaign",
+                            description="Issue health warnings via SMS, social media. Focus on vulnerable areas: South Delhi, Noida, Gurugram.",
+                            priority="medium",
+                            icon="📢"
+                        ),
+                        Recommendation(
+                            title="School Closure Decision",
+                            description="If AQI remains >300 for 48h, consider temporary school closures to protect children.",
+                            priority="high",
+                            icon="🏫"
+                        )
+                    ]
+                else:
+                    recommendations = [
+                        Recommendation(
+                            title="Monitor Stubble Burning",
+                            description="Satellite data shows fire counts in Punjab/Haryana. Coordinate with neighboring states for preventive action.",
+                            priority="medium",
+                            icon="🔥"
+                        ),
+                        Recommendation(
+                            title="Strengthen Public Transport",
+                            description="Increase metro frequency and bus services to reduce private vehicle usage during pollution season.",
+                            priority="medium",
+                            icon="🚇"
+                        ),
+                        Recommendation(
+                            title="Industrial Compliance Checks",
+                            description="Conduct surprise inspections of industrial units. Ensure pollution control equipment is operational.",
+                            priority="medium",
+                            icon="🏭"
+                        ),
+                        Recommendation(
+                            title="Green Infrastructure Development",
+                            description="Fast-track urban forestry projects in identified pollution hotspots. Long-term solution.",
+                            priority="low",
+                            icon="🌳"
+                        )
+                    ]
+            
+            context = f"Policy guidance for AQI {current_aqi} with forecast: 48h={forecast_data.aqi_48h}, 72h={forecast_data.aqi_72h}"
+        
+        return RecommendationsResponse(
+            user_type=user_type,
+            current_aqi=current_aqi,
+            recommendations=recommendations,
+            context=context,
+            prediction_type="ai_enhanced" if GEMINI_API_KEY else "simulation",
+            model_version="recommendations_v1.0",
+            generated_at=datetime.now(timezone.utc)
+        )
+        
+    except Exception as e:
+        logger.error(f"Error generating recommendations: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate recommendations")
+
+@api_router.get("/alerts", response_model=AlertsResponse)
+async def get_forecast_alerts():
+    """Generate alerts based on 48-72h forecast analysis"""
+    try:
+        forecast_data = await get_forecast()
+        aqi_data = await get_current_aqi()
+        
+        alerts = []
+        alert_id_counter = 1
+        
+        # Critical AQI threshold alert
+        if forecast_data.aqi_48h > 250 or forecast_data.aqi_72h > 250:
+            alerts.append(Alert(
+                id=f"alert_{alert_id_counter}",
+                severity="critical",
+                title="Severe Pollution Alert",
+                message=f"AQI forecast to reach {max(forecast_data.aqi_48h, forecast_data.aqi_72h)} in next 48-72 hours. Hazardous conditions expected.",
+                time_window="Next 48-72 hours",
+                affected_groups=["All residents", "Children", "Elderly", "People with respiratory conditions"],
+                aqi_range=f"{int(forecast_data.aqi_48h)}-{int(forecast_data.aqi_72h)}"
+            ))
+            alert_id_counter += 1
+        
+        # Unhealthy conditions alert
+        if 150 < forecast_data.aqi_48h <= 250:
+            alerts.append(Alert(
+                id=f"alert_{alert_id_counter}",
+                severity="high",
+                title="Unhealthy Air Quality Expected",
+                message=f"Air quality will deteriorate to unhealthy levels (AQI ~{int(forecast_data.aqi_48h)}) in next 48 hours.",
+                time_window="Next 24-48 hours",
+                affected_groups=["Sensitive groups", "Children", "Elderly", "Outdoor workers"],
+                aqi_range=f"{int(forecast_data.aqi_48h)}-{int(forecast_data.aqi_72h)}"
+            ))
+            alert_id_counter += 1
+        
+        # Trend-based alert
+        if forecast_data.trend == "worsening":
+            alerts.append(Alert(
+                id=f"alert_{alert_id_counter}",
+                severity="medium",
+                title="Deteriorating Air Quality",
+                message=f"Air quality is worsening. Current AQI: {int(aqi_data.aqi)}, forecast to reach {int(forecast_data.aqi_72h)}.",
+                time_window="Next 72 hours",
+                affected_groups=["People with pre-existing conditions", "Sensitive individuals"],
+                aqi_range=f"{int(aqi_data.aqi)}-{int(forecast_data.aqi_72h)}"
+            ))
+            alert_id_counter += 1
+        
+        # Improvement alert
+        if forecast_data.trend == "improving" and aqi_data.aqi > 150:
+            alerts.append(Alert(
+                id=f"alert_{alert_id_counter}",
+                severity="low",
+                title="Air Quality Improving",
+                message=f"Good news! Air quality expected to improve from {int(aqi_data.aqi)} to {int(forecast_data.aqi_72h)} over next 72 hours.",
+                time_window="Next 72 hours",
+                affected_groups=["General public"],
+                aqi_range=f"{int(forecast_data.aqi_72h)}-{int(aqi_data.aqi)}"
+            ))
+            alert_id_counter += 1
+        
+        # Weather-based alert
+        if forecast_data.weather_conditions.get('wind_speed', 0) < 5:
+            alerts.append(Alert(
+                id=f"alert_{alert_id_counter}",
+                severity="medium",
+                title="Low Wind Conditions",
+                message="Low wind speed may trap pollutants. Expect slower dispersion of pollution.",
+                time_window="Next 24-48 hours",
+                affected_groups=["Respiratory sensitive individuals", "Asthma patients"],
+                aqi_range=f"{int(forecast_data.aqi_48h)}-{int(forecast_data.aqi_72h)}"
+            ))
+            alert_id_counter += 1
+        
+        # If no specific alerts, add general monitoring message
+        if not alerts:
+            alerts.append(Alert(
+                id=f"alert_{alert_id_counter}",
+                severity="info",
+                title="Air Quality Stable",
+                message=f"Air quality expected to remain relatively stable around AQI {int(forecast_data.aqi_48h)}. Continue monitoring.",
+                time_window="Next 72 hours",
+                affected_groups=["All residents"],
+                aqi_range=f"{int(forecast_data.aqi_48h)}-{int(forecast_data.aqi_72h)}"
+            ))
+        
+        return AlertsResponse(
+            alerts=alerts,
+            forecast_period="48-72 hours",
+            prediction_type="simulation",
+            model_version="alerts_v1.0",
+            generated_at=datetime.now(timezone.utc)
+        )
+        
+    except Exception as e:
+        logger.error(f"Error generating alerts: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate alerts")
+
+@api_router.get("/insights/summary", response_model=InsightsSummaryResponse)
+async def get_insights_summary():
+    """Generate AI-powered analytical insights summary"""
+    try:
+        # Gather all relevant data
+        aqi_data = await get_current_aqi()
+        forecast_data = await get_forecast()
+        source_data = await get_pollution_sources()
+        
+        current_aqi = aqi_data.aqi
+        trend = forecast_data.trend
+        dominant_source = source_data.dominant_source
+        
+        # Use Gemini for enhanced insights
+        prompt = f"""Analyze Delhi NCR air quality data and provide 5-6 key insights:
+
+Current Status:
+- AQI: {current_aqi} ({aqi_data.category})
+- 48h Forecast: {forecast_data.aqi_48h}
+- 72h Forecast: {forecast_data.aqi_72h}
+- Trend: {trend}
+- Dominant Source: {dominant_source}
+- Source Contributions: {source_data.contributions}
+
+Generate concise, data-driven insights about:
+1. Current air quality status
+2. Forecast implications
+3. Primary pollution drivers
+4. Temporal patterns
+5. Actionable takeaways
+
+Return as simple bullet points (3-5 words each), no formatting."""
+
+        ai_insights = await get_gemini_response(prompt, "")
+        
+        key_insights = []
+        if ai_insights:
+            # Parse insights from AI response
+            lines = [line.strip() for line in ai_insights.split('\n') if line.strip()]
+            key_insights = [line.lstrip('•-*123456789. ') for line in lines[:6] if len(line) > 10]
+        
+        # Fallback insights
+        if not key_insights:
+            key_insights = [
+                f"Current AQI at {int(current_aqi)} - {aqi_data.category} level",
+                f"{dominant_source.replace('_', ' ').title()} is the primary pollution source ({int(source_data.contributions.get(dominant_source, 0))}%)",
+                f"Air quality trend: {trend} over next 48-72 hours",
+                f"Forecast: AQI expected to reach {int(forecast_data.aqi_72h)} in 3 days",
+            ]
+            
+            if forecast_data.aqi_48h > 200:
+                key_insights.append("⚠️ Unhealthy conditions expected - take precautions")
+            
+            if trend == "improving":
+                key_insights.append("✅ Improving conditions - outdoor activities safer soon")
+            elif trend == "worsening":
+                key_insights.append("⚠️ Deteriorating conditions - limit outdoor exposure")
+        
+        # Generate forecast summary
+        if trend == "improving":
+            forecast_summary = f"Air quality improving from {int(current_aqi)} to {int(forecast_data.aqi_72h)} over 72 hours"
+        elif trend == "worsening":
+            forecast_summary = f"Air quality deteriorating from {int(current_aqi)} to {int(forecast_data.aqi_72h)} over 72 hours"
+        else:
+            forecast_summary = f"Air quality stable around {int(current_aqi)} for next 72 hours"
+        
+        # Generate recommendation
+        if current_aqi > 200:
+            recommendation = "Immediate action required: Reduce outdoor activities, implement emergency measures"
+        elif current_aqi > 150:
+            recommendation = "Caution advised: Sensitive groups should limit exposure, monitor conditions"
+        else:
+            recommendation = "Moderate conditions: Continue monitoring, basic precautions sufficient"
+        
+        return InsightsSummaryResponse(
+            key_insights=key_insights,
+            dominant_source=dominant_source.replace('_', ' ').title(),
+            trend=trend.title(),
+            forecast_summary=forecast_summary,
+            recommendation=recommendation,
+            prediction_type="ai_enhanced" if GEMINI_API_KEY else "simulation",
+            model_version="insights_v1.0",
+            confidence=forecast_data.confidence,
+            generated_at=datetime.now(timezone.utc)
+        )
+        
+    except Exception as e:
+        logger.error(f"Error generating insights: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate insights summary")
+
+@api_router.get("/model/transparency", response_model=TransparencyInfo)
+async def get_model_transparency():
+    """Provide transparency information about data sources and models"""
+    return TransparencyInfo(
+        data_sources=[
+            {
+                "name": "CPCB (Central Pollution Control Board)",
+                "type": "Real-time monitoring stations",
+                "coverage": "40+ stations across Delhi NCR",
+                "update_frequency": "Hourly",
+                "parameters": ["PM2.5", "PM10", "NO2", "SO2", "CO", "O3"]
+            },
+            {
+                "name": "WAQI (World Air Quality Index)",
+                "type": "Aggregated air quality data",
+                "coverage": "Global coverage with Delhi focus",
+                "update_frequency": "Real-time",
+                "parameters": ["AQI", "Pollutant levels"]
+            },
+            {
+                "name": "Satellite Data (MODIS/Sentinel)",
+                "type": "Remote sensing",
+                "coverage": "Regional aerosol optical depth",
+                "update_frequency": "Daily",
+                "parameters": ["AOD", "Fire hotspots", "Land use"]
+            },
+            {
+                "name": "Weather Data (IMD/OpenWeather)",
+                "type": "Meteorological parameters",
+                "coverage": "Delhi NCR region",
+                "update_frequency": "Hourly",
+                "parameters": ["Temperature", "Humidity", "Wind speed", "Precipitation"]
+            }
+        ],
+        model_approach="Simulation-Based Forecasting with ML-Ready Architecture",
+        current_version="v1.0 - Physics-informed simulation models",
+        ml_upgrade_path="""
+The platform is designed for seamless ML integration:
+
+Phase 1 (Current): Simulation-based models using domain knowledge
+- Rule-based forecasting with weather integration
+- Source attribution using pollutant signatures
+- Historical pattern analysis for seasonal outlook
+
+Phase 2 (Planned): Hybrid ML models
+- LSTM/GRU networks for time-series forecasting
+- Random Forest for source attribution
+- XGBoost for policy impact prediction
+- Training on 3+ years of historical CPCB data
+
+Phase 3 (Advanced): Deep learning & transfer learning
+- Transformer models for multi-variate prediction
+- Graph Neural Networks for spatial pollution modeling
+- Integration with satellite imagery for real-time updates
+- Continuous learning from new data
+
+All API endpoints maintain consistent schema regardless of underlying model, ensuring zero disruption during ML upgrades.
+        """.strip(),
+        limitations=[
+            "Current forecasts based on simulation - not trained ML models",
+            "Heatmap shows simulated hotspots - actual coverage may vary",
+            "Source attribution uses pollutant signatures - not direct measurement",
+            "Policy impact estimates based on historical averages",
+            "Weather integration limited to basic parameters",
+            "Real-time data depends on CPCB station availability"
+        ],
+        update_frequency="Real-time AQI updates (hourly), Forecasts every 6 hours, Models updated quarterly"
+    )
+
 app.include_router(api_router)
 
 app.add_middleware(
