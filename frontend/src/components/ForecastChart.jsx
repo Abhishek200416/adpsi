@@ -184,8 +184,8 @@ export const ForecastChart = ({ forecast, currentAQI }) => {
           <AreaChart data={data}>
             <defs>
               <linearGradient id="aqiGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#0F766E" stopOpacity={0.4} />
-                <stop offset="95%" stopColor="#0F766E" stopOpacity={0.05} />
+                <stop offset="5%" stopColor={getAQIColor(forecast.aqi_72h)} stopOpacity={0.4} />
+                <stop offset="95%" stopColor={getAQIColor(forecast.aqi_72h)} stopOpacity={0.05} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
@@ -210,15 +210,62 @@ export const ForecastChart = ({ forecast, currentAQI }) => {
                 padding: '12px'
               }}
               labelStyle={{ fontWeight: 600, marginBottom: '4px' }}
+              content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                  const aqi = payload[0].value;
+                  return (
+                    <div style={{
+                      backgroundColor: 'white',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '12px',
+                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                      padding: '12px'
+                    }}>
+                      <p style={{ fontWeight: 600, marginBottom: '4px' }}>{payload[0].payload.label}</p>
+                      <p style={{ color: getAQIColor(aqi), fontWeight: 700, fontSize: '18px' }}>
+                        AQI: {Math.round(aqi)}
+                      </p>
+                      <p style={{ fontSize: '12px', color: '#64748B' }}>
+                        {getAQICategory(aqi)}
+                      </p>
+                    </div>
+                  );
+                }
+                return null;
+              }}
             />
             <Area
               type="monotone"
               dataKey="aqi"
-              stroke="#0F766E"
+              stroke={getAQIColor(forecast.aqi_72h)}
               strokeWidth={3}
               fill="url(#aqiGradient)"
-              dot={{ fill: '#0F766E', strokeWidth: 2, r: 5 }}
-              activeDot={{ r: 7, strokeWidth: 2 }}
+              dot={(props) => {
+                const { cx, cy, payload } = props;
+                return (
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={5}
+                    fill={getAQIColor(payload.aqi)}
+                    stroke="white"
+                    strokeWidth={2}
+                  />
+                );
+              }}
+              activeDot={(props) => {
+                const { cx, cy, payload } = props;
+                return (
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={7}
+                    fill={getAQIColor(payload.aqi)}
+                    stroke="white"
+                    strokeWidth={2}
+                  />
+                );
+              }}
             />
           </AreaChart>
         </ResponsiveContainer>
