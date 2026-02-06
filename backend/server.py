@@ -126,6 +126,69 @@ class SeasonalOutlook(BaseModel):
     low_risk_months: List[str]
     current_outlook: str
 
+class HeatmapPoint(BaseModel):
+    lat: float
+    lng: float
+    intensity: float
+    aqi: float
+    category: str
+
+class HeatmapResponse(BaseModel):
+    points: List[HeatmapPoint]
+    timestamp: datetime
+    prediction_type: str
+    model_version: str
+
+class Recommendation(BaseModel):
+    title: str
+    description: str
+    priority: str
+    icon: str
+
+class RecommendationsResponse(BaseModel):
+    user_type: str
+    current_aqi: float
+    recommendations: List[Recommendation]
+    context: str
+    prediction_type: str
+    model_version: str
+    generated_at: datetime
+
+class Alert(BaseModel):
+    id: str
+    severity: str
+    title: str
+    message: str
+    time_window: str
+    affected_groups: List[str]
+    aqi_range: str
+
+class AlertsResponse(BaseModel):
+    alerts: List[Alert]
+    forecast_period: str
+    prediction_type: str
+    model_version: str
+    generated_at: datetime
+
+class InsightsSummaryResponse(BaseModel):
+    key_insights: List[str]
+    dominant_source: str
+    trend: str
+    forecast_summary: str
+    recommendation: str
+    prediction_type: str
+    model_version: str
+    confidence: float
+    generated_at: datetime
+
+class TransparencyInfo(BaseModel):
+    data_sources: List[dict]
+    model_approach: str
+    current_version: str
+    ml_upgrade_path: str
+    limitations: List[str]
+    update_frequency: str
+
 class SafeRouteRequest(BaseModel):
     start_lat: float
     start_lng: float
