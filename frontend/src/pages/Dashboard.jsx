@@ -199,6 +199,11 @@ export default function Dashboard() {
             </div>
           </Link>
         </div>
+
+        {/* Data & Model Transparency Panel */}
+        <div className="mb-8">
+          <TransparencyPanel />
+        </div>
       </div>
 
       <Footer />
