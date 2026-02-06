@@ -1154,6 +1154,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.on_event("startup")
+async def startup_db():
+    """Initialize database on startup"""
+    init_db()
+    logger.info("✅ Database initialized")
+
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
