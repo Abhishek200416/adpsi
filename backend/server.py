@@ -113,6 +113,8 @@ class SourceContribution(BaseModel):
     model_version: str
     explanation: str
     pollutant_indicators: dict
+    error: Optional[str] = None
+    message: Optional[str] = None
 
 class HealthAdvisory(BaseModel):
     aqi_level: str
