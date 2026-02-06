@@ -173,32 +173,6 @@ export default function Prediction() {
           </div>
         )}
 
-        {/* Methodology Section */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-          <h3 className="text-xl font-semibold font-['Manrope'] mb-4">Our Prediction Methodology</h3>
-          <div className="grid md:grid-cols-2 gap-6 text-sm text-slate-600">
-            <div>
-              <h4 className="font-semibold text-slate-900 mb-2">Data Sources</h4>
-              <ul className="space-y-2 list-disc list-inside">
-                <li>Real-time air quality monitoring stations</li>
-                <li>Weather and meteorological data</li>
-                <li>Traffic density patterns</li>
-                <li>Industrial emission reports</li>
-                <li>Seasonal agricultural activities</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-slate-900 mb-2">ML Techniques</h4>
-              <ul className="space-y-2 list-disc list-inside">
-                <li>Time-series forecasting algorithms</li>
-                <li>Multi-factor regression analysis</li>
-                <li>Pattern recognition from historical data</li>
-                <li>Source attribution modeling</li>
-                <li>Continuous model refinement</li>
-              </ul>
-            </div>
-          </div>
-        </div>
       </div>
 
       <Footer />
