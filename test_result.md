@@ -119,77 +119,89 @@ user_problem_statement: |
   7. Update transparency endpoint to reflect ML model status
 
 backend:
-  - task: "Add heatmap data endpoint (/api/aqi/heatmap)"
+  - task: "Create SQLite database with ORM models"
     implemented: true
     working: true
-    file: "/app/backend/server.py"
+    file: "/app/backend/database.py"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
       - working: true
         agent: "main"
-        comment: "Implemented heatmap endpoint returning grid of AQI points with lat/lng/intensity. Returns ML-ready metadata (prediction_type, model_version)"
+        comment: "Created SQLAlchemy ORM models for SQLite (PostgreSQL compatible). Models: AdminUser, PollutionReportDB, AQIPredictionLog, SourceAttributionLog. Database initialization on startup."
   
-  - task: "Add AI recommendations endpoint (/api/recommendations)"
+  - task: "Update AQI Forecaster to load XGBoost ensemble"
     implemented: true
     working: true
-    file: "/app/backend/server.py"
+    file: "/app/backend/ml_models/aqi_forecaster.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "Implemented recommendations endpoint with Gemini AI integration. Returns contextual recommendations for citizens and policymakers. Falls back to simulation if AI unavailable."
+        comment: "Rewrote aqi_forecaster.py to load XGBoost ensemble models. Loads artifact_wrapper.pkl and 5 booster JSON files. Prepares features with pollutants, time cycles, location, AQI memory. Returns aqi_24h, aqi_48h, aqi_72h with confidence. Gracefully handles missing models with clear error messages."
   
-  - task: "Add forecast alerts endpoint (/api/alerts)"
+  - task: "Update Source Attribution to load Random Forest model"
     implemented: true
     working: true
-    file: "/app/backend/server.py"
+    file: "/app/backend/ml_models/source_attribution.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "Implemented alerts endpoint analyzing 48-72h forecasts. Returns alerts with severity, time window, affected groups, AQI range"
+        comment: "Rewrote source_attribution.py to load joblib model. Prepares input with pollutants, ratios, time features. Returns percentage contributions for Traffic, Industry, Construction, Stubble_Burning, Other. Gracefully handles missing models."
   
-  - task: "Add insights summary endpoint (/api/insights/summary)"
+  - task: "Update API endpoints to use ML models"
     implemented: true
     working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "Implemented insights endpoint with AI-enhanced analysis. Returns key insights, dominant source, trend, forecast summary, recommendations"
+        comment: "Updated /api/aqi/forecast and /api/aqi/sources endpoints to use async ML prediction. Removed weather_data and hour_of_day parameters. Added error handling for model not loaded cases. Updated response models to include optional error/message fields."
   
-  - task: "Add model transparency endpoint (/api/model/transparency)"
+  - task: "Update transparency endpoint with ML status"
     implemented: true
     working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "Implemented transparency endpoint returning data sources (CPCB, WAQI, Satellite, Weather), model approach, ML upgrade path, limitations"
+        comment: "Updated /api/model/transparency endpoint to dynamically show ML model status. Shows different content based on whether models are loaded, including setup instructions and model architecture details."
   
-  - task: "Integrate Gemini API for AI enhancements"
+  - task: "Install ML dependencies"
     implemented: true
     working: true
-    file: "/app/backend/server.py"
+    file: "/app/backend/requirements.txt"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
       - working: true
         agent: "main"
-        comment: "Integrated Google Gemini API (gemini-1.5-flash) for enhanced recommendations and insights. Added helper function with fallback to simulation"
+        comment: "Added xgboost==2.1.3 and sqlalchemy==2.0.36 to requirements.txt. Dependencies installed successfully."
+  
+  - task: "Create model directories and documentation"
+    implemented: true
+    working: true
+    file: "/app/backend/ml_models/"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Created model1/ and model2/ directories. Added MODEL_SETUP.md with comprehensive setup guide, README files in each model directory with instructions."
 
 frontend:
   - task: "Update MapView component with heatmap toggle"
