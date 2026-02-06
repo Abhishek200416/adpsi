@@ -33,6 +33,11 @@ logger = logging.getLogger(__name__)
 ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'admin@delhiair.gov.in')
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'DelhiAir@2026')
 WAQI_API_TOKEN = os.environ.get('WAQI_API_TOKEN')
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+
+# Configure Gemini
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
 
 class LoginRequest(BaseModel):
     email: str
