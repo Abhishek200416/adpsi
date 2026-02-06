@@ -121,6 +121,46 @@ export default function Prediction() {
         </div>
 
         {/* Info Banner */}
+        {forecast && forecast.prediction_type === 'not_loaded' && (
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-xl p-6 mb-8">
+            <div className="flex items-start gap-4">
+              <AlertCircle className="h-6 w-6 text-amber-600 flex-shrink-0 mt-1" />
+              <div>
+                <h3 className="font-semibold font-['Manrope'] text-amber-900 mb-2">⚠️ ML Models Not Configured</h3>
+                <p className="text-amber-800 text-sm leading-relaxed mb-3">
+                  {forecast.message || 'AQI forecasting ML model files are not available. The prediction system is ready but awaiting model file upload.'}
+                </p>
+                <div className="bg-white bg-opacity-60 rounded-lg p-4 text-xs text-amber-900">
+                  <div className="font-semibold mb-2">📋 To enable ML predictions:</div>
+                  <ol className="list-decimal list-inside space-y-1 ml-2">
+                    <li>Upload model files to <code className="bg-amber-100 px-1.5 py-0.5 rounded">/app/backend/ml_models/model1/</code></li>
+                    <li>Required files: artifact_wrapper.pkl, booster_seed42-86.json, ensemble_metadata.json</li>
+                    <li>Restart backend: <code className="bg-amber-100 px-1.5 py-0.5 rounded">sudo supervisorctl restart backend</code></li>
+                    <li>Refresh this page to see ML predictions</li>
+                  </ol>
+                  <div className="mt-2 pt-2 border-t border-amber-300">
+                    <span className="font-semibold">📖 Documentation:</span> See /app/backend/ml_models/MODEL_SETUP.md for detailed setup guide
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {forecast && forecast.prediction_type === 'ml' && (
+          <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl p-6 mb-8">
+            <div className="flex items-start gap-4">
+              <Brain className="h-6 w-6 text-emerald-600 flex-shrink-0 mt-1" />
+              <div>
+                <h3 className="font-semibold font-['Manrope'] text-emerald-900 mb-2">✅ ML Models Active</h3>
+                <p className="text-emerald-800 text-sm leading-relaxed">
+                  XGBoost ensemble models are successfully loaded and providing predictions. Model version: {forecast.model_version}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-6 mb-8">
           <div className="flex items-start gap-4">
             <TrendingUp className="h-6 w-6 text-purple-600 flex-shrink-0 mt-1" />
@@ -128,8 +168,8 @@ export default function Prediction() {
               <h3 className="font-semibold font-['Manrope'] text-purple-900 mb-2">Advanced ML-Ready Forecasting</h3>
               <p className="text-purple-800 text-sm leading-relaxed">
                 Our system analyzes real-time AQI, weather patterns, traffic conditions, and seasonal factors 
-                to predict air quality trends up to 72 hours in advance. The simulation-based approach is designed 
-                to seamlessly transition to machine learning models when available.
+                to predict air quality trends up to 72 hours in advance. The prediction system uses XGBoost ensemble
+                models trained on historical CPCB data (2019-2025) when available.
               </p>
             </div>
           </div>
