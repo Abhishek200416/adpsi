@@ -226,33 +226,52 @@ export default function AdminDashboard() {
           </button>
 
           {policyImpact && (
-            <div className="bg-gradient-to-br from-teal-50 to-emerald-50 border border-teal-200 rounded-xl p-6" data-testid="policy-impact-result">
-              <div className="grid md:grid-cols-3 gap-6">
-                <div>
-                  <div className="text-sm text-slate-600 mb-1">Estimated AQI Reduction</div>
-                  <div className="text-3xl font-bold font-['Manrope'] text-teal-700" data-testid="impact-reduction">
-                    -{policyImpact.estimated_reduction}%
+            <div className="space-y-6" data-testid="policy-impact-result">
+              <div className="bg-gradient-to-br from-teal-50 to-emerald-50 border border-teal-200 rounded-xl p-6">
+                <div className="grid md:grid-cols-3 gap-6">
+                  <div>
+                    <div className="text-sm text-slate-600 mb-1">Estimated AQI Reduction</div>
+                    <div className="text-3xl font-bold font-['Manrope'] text-teal-700" data-testid="impact-reduction">
+                      -{policyImpact.estimated_reduction}%
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-slate-600 mb-1">Impact Timeline</div>
+                    <div className="text-3xl font-bold font-['Manrope'] text-slate-900" data-testid="impact-timeline">
+                      {policyImpact.timeline_days} days
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-slate-600 mb-1">Affected Sources</div>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {policyImpact.affected_sources.map(source => (
+                        <span key={source} className="px-3 py-1 bg-teal-700 text-white text-xs rounded-full capitalize">
+                          {source.replace('_', ' ')}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <div className="text-sm text-slate-600 mb-1">Impact Timeline</div>
-                  <div className="text-3xl font-bold font-['Manrope'] text-slate-900" data-testid="impact-timeline">
-                    {policyImpact.timeline_days} days
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm text-slate-600 mb-1">Affected Sources</div>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {policyImpact.affected_sources.map(source => (
-                      <span key={source} className="px-3 py-1 bg-teal-700 text-white text-xs rounded-full capitalize">
-                        {source}
-                      </span>
-                    ))}
-                  </div>
+                <div className="mt-4 pt-4 border-t border-teal-200">
+                  <p className="text-sm text-slate-700" data-testid="impact-description">{policyImpact.description}</p>
                 </div>
               </div>
-              <div className="mt-4 pt-4 border-t border-teal-200">
-                <p className="text-sm text-slate-700" data-testid="impact-description">{policyImpact.description}</p>
+
+              {/* Policy Recommendation Reasoning - NEW */}
+              <div className="bg-white border border-slate-200 rounded-xl p-6">
+                <h4 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                  <TrendingDown className="h-5 w-5 text-purple-600" />
+                  Why This Policy is Recommended
+                </h4>
+                <p className="text-slate-700 leading-relaxed mb-4">
+                  {policyImpact.recommendation_reasoning}
+                </p>
+                
+                {/* Confidence Indicator for Policy - NEW */}
+                <ConfidenceIndicator 
+                  level={policyImpact.confidence_level}
+                  explanation={policyImpact.confidence_explanation}
+                />
               </div>
             </div>
           )}
