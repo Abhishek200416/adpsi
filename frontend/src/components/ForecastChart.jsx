@@ -299,11 +299,47 @@ export const ForecastChart = ({ forecast, currentAQI }) => {
                   padding: '12px'
                 }}
                 labelStyle={{ fontWeight: 600, marginBottom: '4px' }}
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const aqi = payload[0].value;
+                    return (
+                      <div style={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '12px',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                        padding: '12px'
+                      }}>
+                        <p style={{ fontWeight: 600, marginBottom: '4px' }}>{payload[0].payload.time}</p>
+                        <p style={{ color: getAQIColor(aqi), fontWeight: 700, fontSize: '18px' }}>
+                          AQI: {Math.round(aqi)}
+                        </p>
+                        <p style={{ fontSize: '12px', color: '#64748B' }}>
+                          {getAQICategory(aqi)}
+                        </p>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
               />
               <Bar 
                 dataKey="aqi" 
-                fill="#0F766E"
                 radius={[8, 8, 0, 0]}
+                shape={(props) => {
+                  const { x, y, width, height, payload } = props;
+                  return (
+                    <rect
+                      x={x}
+                      y={y}
+                      width={width}
+                      height={height}
+                      fill={getAQIColor(payload.aqi)}
+                      rx={8}
+                      ry={8}
+                    />
+                  );
+                }}
               />
             </BarChart>
           </ResponsiveContainer>
