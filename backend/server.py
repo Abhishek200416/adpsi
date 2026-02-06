@@ -1083,70 +1083,102 @@ Return as simple bullet points (3-5 words each), no formatting."""
 @api_router.get("/model/transparency", response_model=TransparencyInfo)
 async def get_model_transparency():
     """Provide transparency information about data sources and models"""
+    
+    # Check ML model status
+    forecaster_status = forecaster.prediction_type
+    attribution_status = attribution_model.prediction_type
+    
+    if forecaster_status == "ml" and attribution_status == "ml":
+        model_approach = "Machine Learning Models"
+        current_version = "v2.0 - Trained ML models on historical data (2015-2025)"
+        limitations = [
+            "Model predictions based on historical patterns - extreme weather events may affect accuracy",
+            "AQI memory features use current AQI as proxy (sliding window not yet implemented)",
+            "Source attribution trained on labeled Delhi NCR data",
+            "Real-time data depends on WAQI API availability",
+            "Ensemble predictions provide confidence intervals"
+        ]
+    elif forecaster_status == "not_loaded" or attribution_status == "not_loaded":
+        model_approach = "ML Models Not Configured"
+        current_version = "v2.0 - Awaiting ML model files"
+        limitations = [
+            "ML model files not found in /app/backend/ml_models/",
+            "Please upload model files to enable predictions",
+            "See MODEL_SETUP.md for detailed instructions",
+            "API endpoints will return error responses until models are configured"
+        ]
+    else:
+        model_approach = "Hybrid: ML and Simulation"
+        current_version = "v2.0 - Partial ML integration"
+        limitations = [
+            f"AQI Forecasting: {forecaster_status}",
+            f"Source Attribution: {attribution_status}",
+            "Some endpoints may use fallback predictions",
+            "Upload missing model files for full ML functionality"
+        ]
+    
     return TransparencyInfo(
         data_sources=[
             {
-                "name": "CPCB (Central Pollution Control Board)",
-                "type": "Real-time monitoring stations",
-                "coverage": "40+ stations across Delhi NCR",
-                "update_frequency": "Hourly",
-                "parameters": ["PM2.5", "PM10", "NO2", "SO2", "CO", "O3"]
-            },
-            {
                 "name": "WAQI (World Air Quality Index)",
-                "type": "Aggregated air quality data",
-                "coverage": "Global coverage with Delhi focus",
-                "update_frequency": "Real-time",
-                "parameters": ["AQI", "Pollutant levels"]
+                "type": "Real-time air quality data",
+                "coverage": "Delhi NCR with geo-location support",
+                "update_frequency": "Real-time (every 30 minutes)",
+                "parameters": ["AQI", "PM2.5", "PM10", "NO2", "SO2", "CO", "O3"]
             },
             {
-                "name": "Satellite Data (MODIS/Sentinel)",
-                "type": "Remote sensing",
-                "coverage": "Regional aerosol optical depth",
-                "update_frequency": "Daily",
-                "parameters": ["AOD", "Fire hotspots", "Land use"]
+                "name": "CPCB (Central Pollution Control Board)",
+                "type": "Historical training data",
+                "coverage": "40+ stations across Delhi NCR (2015-2024)",
+                "update_frequency": "Historical dataset for model training",
+                "parameters": ["PM2.5", "PM10", "NO2", "SO2", "CO", "O3", "AQI"]
             },
             {
-                "name": "Weather Data (IMD/OpenWeather)",
-                "type": "Meteorological parameters",
-                "coverage": "Delhi NCR region",
-                "update_frequency": "Hourly",
-                "parameters": ["Temperature", "Humidity", "Wind speed", "Precipitation"]
+                "name": "Satellite Data",
+                "type": "Fire hotspot detection",
+                "coverage": "Regional stubble burning monitoring",
+                "update_frequency": "Daily (seasonal)",
+                "parameters": ["Fire count", "AOD"]
             }
         ],
-        model_approach="Simulation-Based Forecasting with ML-Ready Architecture",
-        current_version="v1.0 - Physics-informed simulation models",
-        ml_upgrade_path="""
-The platform is designed for seamless ML integration:
+        model_approach=model_approach,
+        current_version=current_version,
+        ml_upgrade_path=f"""
+ML Model Integration Status:
 
-Phase 1 (Current): Simulation-based models using domain knowledge
-- Rule-based forecasting with weather integration
-- Source attribution using pollutant signatures
-- Historical pattern analysis for seasonal outlook
+✅ Infrastructure Ready: API endpoints support both simulation and ML predictions
+✅ XGBoost Ensemble: 5-booster AQI forecasting (24h, 48h, 72h)
+✅ Random Forest: Multi-output source attribution
+✅ Database: SQLite with PostgreSQL compatibility
 
-Phase 2 (Planned): Hybrid ML models
-- LSTM/GRU networks for time-series forecasting
-- Random Forest for source attribution
-- XGBoost for policy impact prediction
-- Training on 3+ years of historical CPCB data
+Current Status:
+- AQI Forecasting Model: {forecaster_status.upper()}
+- Source Attribution Model: {attribution_status.upper()}
 
-Phase 3 (Advanced): Deep learning & transfer learning
-- Transformer models for multi-variate prediction
-- Graph Neural Networks for spatial pollution modeling
-- Integration with satellite imagery for real-time updates
-- Continuous learning from new data
+Model Configuration:
+1. Place XGBoost ensemble files in: /app/backend/ml_models/model1/
+   - artifact_wrapper.pkl (feature definitions)
+   - booster_seed42.json through booster_seed86.json (5 boosters)
+   - ensemble_metadata.json
 
-All API endpoints maintain consistent schema regardless of underlying model, ensuring zero disruption during ML upgrades.
+2. Place source attribution model in: /app/backend/ml_models/model2/
+   - pollution_source_regression_model.pkl
+
+3. Restart backend: sudo supervisorctl restart backend
+
+Model Architecture:
+- AQI Forecasting: XGBoost ensemble trained on 2019-2025 data
+  • Features: Pollutants, time cycles, location, AQI memory, ratios
+  • Outputs: AQI predictions at 24h, 48h, 72h with confidence
+  
+- Source Attribution: Random Forest regressor trained on 2015-2024 data
+  • Features: Pollutants, ratios (PM10/PM2.5, NO2/CO), time
+  • Outputs: % contribution (Traffic, Industry, Construction, Stubble Burning, Other)
+
+All API endpoints maintain consistent response schema regardless of model status.
         """.strip(),
-        limitations=[
-            "Current forecasts based on simulation - not trained ML models",
-            "Heatmap shows simulated hotspots - actual coverage may vary",
-            "Source attribution uses pollutant signatures - not direct measurement",
-            "Policy impact estimates based on historical averages",
-            "Weather integration limited to basic parameters",
-            "Real-time data depends on CPCB station availability"
-        ],
-        update_frequency="Real-time AQI updates (hourly), Forecasts every 6 hours, Models updated quarterly"
+        limitations=limitations,
+        update_frequency="Real-time AQI updates, ML predictions on-demand, Models retrained quarterly"
     )
 
 app.include_router(api_router)
