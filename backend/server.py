@@ -84,12 +84,41 @@ class ForecastResponse(BaseModel):
     aqi_72h: float
     trend: str
     confidence: float
+    confidence_level: str
+    confidence_explanation: str
     factors: dict
+    prediction_type: str
+    model_version: str
+    explanation: str
+    weather_conditions: dict
 
 class SourceContribution(BaseModel):
     contributions: dict
     dominant_source: str
     confidence: float
+    confidence_level: str
+    confidence_explanation: str
+    factors_considered: dict
+    prediction_type: str
+    model_version: str
+    explanation: str
+    pollutant_indicators: dict
+
+class HealthAdvisory(BaseModel):
+    aqi_level: str
+    health_impact: str
+    recommendations: List[str]
+    vulnerable_groups: List[str]
+    outdoor_activity: str
+
+class SeasonalOutlook(BaseModel):
+    current_month: int
+    current_month_name: str
+    monthly_patterns: dict
+    high_risk_season: bool
+    high_risk_months: List[str]
+    low_risk_months: List[str]
+    current_outlook: str
 
 class SafeRouteRequest(BaseModel):
     start_lat: float
