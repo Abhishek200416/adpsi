@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import Dict, Any, List
 
 # Configuration
-BASE_URL = "https://pinpin-messenger.preview.emergentagent.com/api"
+BASE_URL = "https://aqi-predict-1.preview.emergentagent.com/api"
 TIMEOUT = 10  # seconds
 
 class APITester:
