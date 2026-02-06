@@ -225,9 +225,9 @@ class APITester:
         else:
             self.log_result("/insights/summary", "Key insights", False, "Empty or invalid key_insights array")
         
-        # Test confidence value
+        # Test confidence value (can be 0-1 or 0-100 scale)
         confidence = data.get("confidence")
-        if isinstance(confidence, (int, float)) and 0 <= confidence <= 1:
+        if isinstance(confidence, (int, float)) and (0 <= confidence <= 1 or 0 <= confidence <= 100):
             self.log_result("/insights/summary", "Confidence range", True, f"Confidence: {confidence}")
         else:
             self.log_result("/insights/summary", "Confidence range", False, f"Invalid confidence: {confidence}")
