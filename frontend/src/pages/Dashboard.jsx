@@ -146,6 +146,21 @@ export default function Dashboard() {
           <MapView />
         </div>
 
+        {/* AI Recommendation Assistant */}
+        <div className="mb-8">
+          <RecommendationAssistant />
+        </div>
+
+        {/* Forecast-Based Alerts */}
+        <div className="mb-8">
+          <ForecastAlerts />
+        </div>
+
+        {/* Analytical Insights Summary */}
+        <div className="mb-8">
+          <InsightsSummary />
+        </div>
+
         {/* Quick Action Cards */}
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           <Link
