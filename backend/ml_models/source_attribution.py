@@ -1,4 +1,7 @@
 import numpy as np
+import pandas as pd
+import joblib
+import os
 from datetime import datetime
 import logging
 
@@ -6,144 +9,224 @@ logger = logging.getLogger(__name__)
 
 class SourceAttributionModel:
     def __init__(self):
-        self.base_contributions = {
-            'traffic': 30,
-            'stubble_burning': 20,
-            'industry': 25,
-            'construction': 25
-        }
-        self.model_version = "v1.0-simulation"
-        self.prediction_type = "simulation"
+        self.model = None
+        self.model_version = "v2.0-ml"
+        self.prediction_type = "not_loaded"
+        self.model_loaded = False
+        self.targets = ["Traffic", "Industry", "Construction", "Stubble_Burning", "Other"]
+        
+        # Model paths (can be configured via environment)
+        self.model_dir = os.path.join(os.path.dirname(__file__), 'model2')
+        self.model_path = os.path.join(self.model_dir, 'pollution_source_regression_model.pkl')
+        
+        self.load_model()
     
-    def _generate_explanation(self, contributions: dict, pollutants: dict, month: int, 
-                            no2: float, co: float, pm10: float, pm25: float) -> str:
-        """Generate detailed explanation for source attribution"""
-        explanations = []
-        dominant = max(contributions, key=contributions.get)
-        
-        # Dominant source explanation
-        if dominant == 'traffic':
-            if no2 > 60:
-                explanations.append(f"High NO2 levels ({no2} µg/m³) strongly indicate vehicular emissions as the primary source.")
-            if co > 2.0:
-                explanations.append(f"Elevated CO levels ({co} mg/m³) further confirm traffic-related pollution.")
-            explanations.append("Rush hour traffic and congested roads are major contributors.")
-        
-        elif dominant == 'stubble_burning':
-            if month in [10, 11, 12]:
-                explanations.append("Seasonal stubble burning in neighboring states significantly impacts Delhi's air quality during this period.")
-                explanations.append("Agricultural fires release massive amounts of PM2.5 and PM10 particles.")
+    def load_model(self):
+        """Load pollution source attribution model"""
+        try:
+            if not os.path.exists(self.model_path):
+                logger.warning(f"❌ ML Model not found at: {self.model_path}")
+                logger.warning("📋 To enable ML predictions, place model files in: /app/backend/ml_models/model2/")
+                logger.warning("   Required files:")
+                logger.warning("   - pollution_source_regression_model.pkl")
+                self.prediction_type = "not_loaded"
+                return
             
-        elif dominant == 'construction':
-            if pm10 / pm25 > 2.0:
-                explanations.append(f"High PM10 to PM2.5 ratio ({pm10/pm25:.2f}) indicates coarse dust particles from construction activities.")
-            explanations.append("Construction dust, road work, and building demolition contribute to particulate matter.")
+            # Load model
+            self.model = joblib.load(self.model_path)
+            self.model_loaded = True
+            self.prediction_type = "ml"
+            logger.info("✅ Pollution Source Attribution Model loaded successfully")
+            
+        except Exception as e:
+            logger.error(f"❌ Error loading source attribution model: {str(e)}")
+            self.prediction_type = "not_loaded"
+    
+    def prepare_input(self, pollutants: dict) -> pd.DataFrame:
+        """Prepare input features for model"""
+        now = datetime.now()
         
-        elif dominant == 'industry':
-            explanations.append("Industrial emissions from manufacturing units, power plants, and factories contribute to baseline pollution.")
+        pm25 = pollutants.get('pm25', 0)
+        pm10 = pollutants.get('pm10', 0)
+        no2 = pollutants.get('no2', 0)
+        co = pollutants.get('co', 0)
+        so2 = pollutants.get('so2', 0)
+        o3 = pollutants.get('o3', 0)
+        
+        data = {
+            'PM2.5': pm25,
+            'PM10': pm10,
+            'NO2': no2,
+            'SO2': so2,
+            'CO': co,
+            'O3': o3,
+            'pm_ratio': pm10 / (pm25 + 1),
+            'no2_co_ratio': no2 / (co + 1),
+            'month': now.month,
+            'hour': now.hour
+        }
+        
+        return pd.DataFrame([data])
+    
+    def predict(self, pollutants: dict, weather: dict = None, month: int = None, fire_count: int = 0) -> dict:
+        """Predict pollution source contributions"""
+        
+        # Check if model is loaded
+        if not self.model_loaded:
+            return {
+                'error': 'ML model not loaded',
+                'message': 'Pollution source attribution ML model is not available. Please configure model files in /app/backend/ml_models/model2/',
+                'contributions': {
+                    'traffic': 0,
+                    'industry': 0,
+                    'construction': 0,
+                    'stubble_burning': 0,
+                    'other': 0
+                },
+                'dominant_source': 'unknown',
+                'confidence': 0.0,
+                'confidence_level': 'none',
+                'confidence_explanation': 'Model not loaded',
+                'factors_considered': {},
+                'prediction_type': self.prediction_type,
+                'model_version': self.model_version,
+                'explanation': 'ML model files are not configured. Please upload model files to enable predictions.',
+                'pollutant_indicators': {}
+            }
+        
+        try:
+            # Prepare input
+            input_df = self.prepare_input(pollutants)
+            
+            # Make prediction
+            raw_pred = self.model.predict(input_df)[0]
+            raw_pred = np.clip(raw_pred, 0, None)
+            
+            # Convert to percentages
+            total = raw_pred.sum()
+            if total > 0:
+                percentages = (raw_pred / total) * 100
+            else:
+                percentages = np.zeros_like(raw_pred)
+            
+            # Create contributions dictionary
+            contributions = {}
+            for target, value in zip(self.targets, percentages):
+                key = target.lower().replace('_', '_')
+                if key == 'stubble_burning':
+                    key = 'stubble_burning'
+                contributions[key] = round(float(value), 1)
+            
+            # Map to expected keys
+            result_contributions = {
+                'traffic': contributions.get('traffic', 0),
+                'industry': contributions.get('industry', 0),
+                'construction': contributions.get('construction', 0),
+                'stubble_burning': contributions.get('stubble_burning', 0),
+                'other': contributions.get('other', 0)
+            }
+            
+            # Determine dominant source
+            dominant_source = max(result_contributions, key=result_contributions.get)
+            dominant_value = result_contributions[dominant_source]
+            
+            # Calculate confidence
+            confidence = min(95, 70 + dominant_value / 3)
+            
+            # Confidence level
+            if confidence >= 80:
+                conf_level = 'high'
+                conf_explanation = f'High confidence: {dominant_source.replace("_", " ").title()} shows clear dominance at {dominant_value:.1f}%.'
+            elif confidence >= 60:
+                conf_level = 'medium'
+                conf_explanation = 'Medium confidence: Multiple sources contribute significantly.'
+            else:
+                conf_level = 'low'
+                conf_explanation = 'Lower confidence: Distributed contributions across sources.'
+            
+            # Generate explanation
+            explanation = self._generate_explanation(
+                result_contributions,
+                pollutants,
+                dominant_source,
+                dominant_value
+            )
+            
+            return {
+                'contributions': result_contributions,
+                'dominant_source': dominant_source,
+                'confidence': round(confidence, 1),
+                'confidence_level': conf_level,
+                'confidence_explanation': conf_explanation,
+                'factors_considered': {
+                    'pollutant_ratios': True,
+                    'seasonal_factors': True,
+                    'time_of_day': True,
+                    'ml_model': 'Random Forest Regressor'
+                },
+                'prediction_type': self.prediction_type,
+                'model_version': self.model_version,
+                'explanation': explanation,
+                'pollutant_indicators': {
+                    'pm25': pollutants.get('pm25', 0),
+                    'pm10': pollutants.get('pm10', 0),
+                    'no2': pollutants.get('no2', 0),
+                    'co': pollutants.get('co', 0),
+                    'pm10_pm25_ratio': round(pollutants.get('pm10', 0) / (pollutants.get('pm25', 1)), 2),
+                    'no2_co_ratio': round(pollutants.get('no2', 0) / (pollutants.get('co', 1)), 2)
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Prediction error: {str(e)}")
+            return {
+                'error': str(e),
+                'message': 'Error during source attribution prediction',
+                'contributions': {
+                    'traffic': 0,
+                    'industry': 0,
+                    'construction': 0,
+                    'stubble_burning': 0,
+                    'other': 0
+                },
+                'dominant_source': 'unknown',
+                'confidence': 0.0,
+                'prediction_type': 'error',
+                'model_version': self.model_version
+            }
+    
+    def _generate_explanation(self, contributions: dict, pollutants: dict, 
+                            dominant_source: str, dominant_value: float) -> str:
+        """Generate explanation for source attribution"""
+        explanations = []
+        
+        # Dominant source
+        source_name = dominant_source.replace('_', ' ').title()
+        explanations.append(f"ML model identifies {source_name} as the primary contributor at {dominant_value:.1f}%.")
+        
+        # Pollutant indicators
+        no2 = pollutants.get('no2', 0)
+        pm10 = pollutants.get('pm10', 0)
+        pm25 = pollutants.get('pm25', 1)
+        
+        if dominant_source == 'traffic' and no2 > 50:
+            explanations.append(f"High NO2 levels ({no2} µg/m³) strongly support vehicular emission attribution.")
+        elif dominant_source == 'construction' and pm10 / pm25 > 2.0:
+            explanations.append(f"High PM10/PM2.5 ratio ({pm10/pm25:.2f}) indicates coarse dust from construction.")
+        elif dominant_source == 'stubble_burning':
+            month = datetime.now().month
+            if month in [10, 11, 12]:
+                explanations.append("Seasonal pattern aligns with agricultural burning season.")
         
         # Secondary contributors
         sorted_sources = sorted(contributions.items(), key=lambda x: x[1], reverse=True)
-        if len(sorted_sources) > 1 and sorted_sources[1][1] > 20:
-            second_source = sorted_sources[1][0].replace('_', ' ').title()
-            explanations.append(f"{second_source} is also a significant contributor at {sorted_sources[1][1]}%.")
+        if len(sorted_sources) > 1 and sorted_sources[1][1] > 15:
+            second_name = sorted_sources[1][0].replace('_', ' ').title()
+            second_value = sorted_sources[1][1]
+            explanations.append(f"{second_name} also contributes significantly at {second_value:.1f}%.")
         
-        # Seasonal context
-        if month in [10, 11, 12]:
-            explanations.append("Winter months see compounded effects from multiple sources due to temperature inversion.")
-        elif month in [7, 8, 9]:
-            explanations.append("Monsoon season typically reduces pollution from most sources due to rain washout.")
+        explanations.append("Prediction based on Random Forest model trained on labeled CPCB data (2015-2024).")
         
         return " ".join(explanations)
-    
-    def _get_confidence_info(self, confidence_score: float, factors_considered: dict) -> dict:
-        """Provide confidence level with explanation"""
-        if confidence_score >= 80:
-            level = 'high'
-            explanation = 'High confidence based on clear pollutant signatures and consistent source patterns.'
-        elif confidence_score >= 60:
-            level = 'medium'
-            explanation = 'Medium confidence due to overlapping source signatures or limited data points.'
-        else:
-            level = 'low'
-            explanation = 'Lower confidence due to mixed pollutant patterns or insufficient meteorological data.'
-        
-        return {
-            'level': level,
-            'score': confidence_score,
-            'explanation': explanation
-        }
-    
-    def predict(self, pollutants: dict, weather: dict, month: int = None, fire_count: int = 0) -> dict:
-        if month is None:
-            month = datetime.now().month
-        
-        pm25 = pollutants.get('pm25', 100)
-        pm10 = pollutants.get('pm10', 150)
-        no2 = pollutants.get('no2', 50)
-        co = pollutants.get('co', 1.5)
-        
-        wind_speed = weather.get('wind_speed', 5)
-        temp = weather.get('temp', 25)
-        
-        contributions = self.base_contributions.copy()
-        
-        if no2 > 60 or co > 2.0:
-            contributions['traffic'] += 15
-        elif no2 < 30:
-            contributions['traffic'] -= 10
-        
-        if month in [10, 11, 12] and fire_count > 0:
-            contributions['stubble_burning'] += min(fire_count * 2, 30)
-        elif month not in [10, 11, 12]:
-            contributions['stubble_burning'] = max(5, contributions['stubble_burning'] - 15)
-        
-        if pm10 / pm25 > 2.0:
-            contributions['construction'] += 20
-        
-        if temp > 30 and wind_speed < 3:
-            contributions['industry'] += 10
-        
-        total = sum(contributions.values())
-        normalized = {k: round((v / total) * 100, 1) for k, v in contributions.items()}
-        
-        dominant_source = max(normalized, key=normalized.get)
-        confidence_score = min(85, 70 + (wind_speed * 2))
-        
-        # Generate explanation
-        explanation = self._generate_explanation(normalized, pollutants, month, no2, co, pm10, pm25)
-        
-        # Get confidence info
-        confidence_info = self._get_confidence_info(confidence_score, {
-            'pollutant_ratios': True,
-            'seasonal_factors': True,
-            'weather_conditions': True,
-            'fire_data': fire_count > 0
-        })
-        
-        return {
-            'contributions': normalized,
-            'dominant_source': dominant_source,
-            'confidence': confidence_score,
-            'confidence_level': confidence_info['level'],
-            'confidence_explanation': confidence_info['explanation'],
-            'factors_considered': {
-                'pollutant_ratios': True,
-                'seasonal_factors': True,
-                'weather_conditions': True,
-                'fire_data': fire_count > 0
-            },
-            # ML-ready metadata
-            'prediction_type': self.prediction_type,
-            'model_version': self.model_version,
-            'explanation': explanation,
-            'pollutant_indicators': {
-                'no2': no2,
-                'co': co,
-                'pm25': pm25,
-                'pm10': pm10,
-                'pm10_pm25_ratio': round(pm10 / pm25, 2) if pm25 > 0 else 0
-            }
-        }
 
 attribution_model = SourceAttributionModel()
