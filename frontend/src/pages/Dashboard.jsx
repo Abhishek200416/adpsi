@@ -6,6 +6,10 @@ import { Footer } from '../components/Footer';
 import { AQICard } from '../components/AQICard';
 import { PollutantBar } from '../components/PollutantBar';
 import { MapView } from '../components/MapView';
+import { RecommendationAssistant } from '../components/RecommendationAssistant';
+import { ForecastAlerts } from '../components/ForecastAlerts';
+import { InsightsSummary } from '../components/InsightsSummary';
+import { TransparencyPanel } from '../components/TransparencyPanel';
 import { Loader2, TrendingUp, Navigation, ShieldAlert, Users } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
