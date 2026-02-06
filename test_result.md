@@ -230,56 +230,82 @@ frontend:
 
 metadata:
   created_by: "main_agent"
-  version: "2.0"
+  version: "3.0"
   test_sequence: 0
   run_ui: false
 
 test_plan:
   current_focus:
-    - "Test all 5 new backend endpoints"
-    - "Test MapView heatmap toggle functionality"
-    - "Test RecommendationAssistant citizen/policymaker toggle"
-    - "Test ForecastAlerts display with different severity levels"
-    - "Test InsightsSummary with AI-enhanced insights"
-    - "Test TransparencyPanel collapsible behavior"
-    - "Verify Gemini API integration for recommendations"
+    - "Test ML model integration when models are NOT present"
+    - "Test /api/aqi/forecast endpoint with model not loaded"
+    - "Test /api/aqi/sources endpoint with model not loaded"
+    - "Test /api/model/transparency endpoint shows correct ML status"
+    - "Update frontend to handle ML model not loaded state"
   stuck_tasks: []
-  test_all: true
+  test_all: false
   test_priority: "high_first"
 
 agent_communication:
   - agent: "main"
     message: |
-      Implementation completed for all 5 requested features:
+      ML MODEL INTEGRATION COMPLETE - Backend Ready
       
-      BACKEND (5 new endpoints):
-      ✅ /api/aqi/heatmap - Returns pollution heatmap grid data
-      ✅ /api/recommendations - AI-powered recommendations (citizen/policymaker)
-      ✅ /api/alerts - Forecast-based alerts with risk assessment
-      ✅ /api/insights/summary - Analytical insights with AI enhancement
-      ✅ /api/model/transparency - Data sources and ML upgrade path info
+      ✅ BACKEND IMPLEMENTATION:
+      1. SQLite Database with ORM (PostgreSQL compatible)
+         - Models: AdminUser, PollutionReportDB, AQIPredictionLog, SourceAttributionLog
+         - Auto-initialization on startup
       
-      FRONTEND (5 new components):
-      ✅ MapView - Updated with heatmap/marker toggle (leaflet.heat)
-      ✅ RecommendationAssistant - Contextual AI recommendations panel
-      ✅ ForecastAlerts - 48-72h forecast alerts with severity
-      ✅ InsightsSummary - Auto-generated analytical insights
-      ✅ TransparencyPanel - Collapsible data & model transparency
+      2. ML Model Integration:
+         - aqi_forecaster.py: Loads XGBoost ensemble (5 boosters)
+         - source_attribution.py: Loads Random Forest regression model
+         - Graceful error handling when models not found
+         - Clear logging with emoji indicators
       
-      INTEGRATIONS:
-      ✅ Gemini API integrated (gemini-1.5-flash) for enhanced recommendations
-      ✅ All APIs return ML-ready metadata (prediction_type, model_version, confidence)
-      ✅ Fallback mechanisms for simulation-based responses
+      3. API Endpoints Updated:
+         - /api/aqi/forecast: Async ML prediction with aqi_24h, aqi_48h, aqi_72h
+         - /api/aqi/sources: ML-based source attribution
+         - /api/model/transparency: Dynamic status based on model availability
+         - Response models include error/message fields for not_loaded state
       
-      KEY FEATURES:
-      - Heatmap shows intensity-based pollution zones with clear labeling
-      - Recommendations are contextual, explainable, and prioritized
-      - Alerts include time windows, affected groups, and risk levels
-      - Insights are AI-enhanced when Gemini available
-      - Transparency panel explains entire data pipeline and ML roadmap
+      4. Dependencies Added:
+         - xgboost==2.1.3
+         - sqlalchemy==2.0.36
       
-      NOTES:
-      - No existing routes or layouts were changed
-      - UI seamlessly supports switching from simulation to ML models
-      - All components integrated into Dashboard and Prediction pages
-      - Ready for frontend testing to verify UI/UX and API integrations
+      5. Documentation Created:
+         - /app/backend/ml_models/MODEL_SETUP.md (comprehensive guide)
+         - /app/backend/ml_models/model1/README.md
+         - /app/backend/ml_models/model2/README.md
+      
+      📂 MODEL FILE STRUCTURE:
+      /app/backend/ml_models/
+      ├── model1/ (AQI Forecasting)
+      │   ├── artifact_wrapper.pkl (required)
+      │   ├── booster_seed42.json (required)
+      │   ├── booster_seed53.json (required)
+      │   ├── booster_seed64.json (required)
+      │   ├── booster_seed75.json (required)
+      │   ├── booster_seed86.json (required)
+      │   └── ensemble_metadata.json (required)
+      └── model2/ (Source Attribution)
+          └── pollution_source_regression_model.pkl (required)
+      
+      🔄 CURRENT STATUS:
+      - Backend running successfully
+      - Models NOT loaded (awaiting file upload)
+      - prediction_type: "not_loaded" for both models
+      - API endpoints return clear error messages
+      - System stable and ready for model files
+      
+      📋 NEXT STEPS:
+      1. Update frontend Prediction page to show ML model status notice
+      2. Test backend endpoints with model not loaded state
+      3. User needs to upload model files to /app/backend/ml_models/model1/ and model2/
+      4. After upload, restart backend: sudo supervisorctl restart backend
+      5. Verify models load with prediction_type: "ml"
+      
+      💡 KEY FEATURES:
+      - NO simulation fallback - pure ML or error response
+      - All OpenWeather dependencies removed
+      - Database ready for prediction logging
+      - Model paths configurable via environment variables
+      - Comprehensive error messages guide user on setup
