@@ -149,6 +149,16 @@ export default function Prediction() {
           </div>
         )}
 
+        {/* Forecast-Based Alerts */}
+        <div className="mb-8">
+          <ForecastAlerts />
+        </div>
+
+        {/* Analytical Insights Summary */}
+        <div className="mb-8">
+          <InsightsSummary />
+        </div>
+
         {/* Source Attribution Section with Confidence */}
         <div className="mb-8">
           {sources && (
