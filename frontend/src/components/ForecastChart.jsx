@@ -346,17 +346,17 @@ export const ForecastChart = ({ forecast, currentAQI }) => {
         </div>
       )}
 
-      <div className="mt-6 flex items-center justify-between text-sm">
+      <div className="mt-6 flex items-center justify-between text-sm flex-wrap gap-4">
         <div className="text-slate-500">
           Model Confidence: <span className="font-semibold text-slate-700" data-testid="forecast-confidence">{forecast.confidence}%</span>
         </div>
-        <div className="flex items-center gap-4 text-xs text-slate-500">
+        <div className="flex items-center gap-4 text-xs text-slate-500 flex-wrap">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
             <span>Good (0-50)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
             <span>Moderate (51-100)</span>
           </div>
           <div className="flex items-center gap-2">
@@ -365,7 +365,15 @@ export const ForecastChart = ({ forecast, currentAQI }) => {
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-red-500"></div>
-            <span>Very Unhealthy (151+)</span>
+            <span>V. Unhealthy (151-200)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+            <span>V. Unhealthy (201-300)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-red-900"></div>
+            <span>Hazardous (300+)</span>
           </div>
         </div>
       </div>
