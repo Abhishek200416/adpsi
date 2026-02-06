@@ -15,6 +15,7 @@ import bcrypt
 from utils.email_service import send_report_confirmation, send_status_update
 from ml_models.aqi_forecaster import forecaster
 from ml_models.source_attribution import attribution_model
+import google.generativeai as genai
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
