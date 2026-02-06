@@ -87,8 +87,9 @@ class AQIData(BaseModel):
     timestamp: datetime
 
 class ForecastResponse(BaseModel):
-    aqi_48h: float
-    aqi_72h: float
+    aqi_24h: Optional[float] = None
+    aqi_48h: Optional[float] = None
+    aqi_72h: Optional[float] = None
     trend: str
     confidence: float
     confidence_level: str
@@ -98,6 +99,8 @@ class ForecastResponse(BaseModel):
     model_version: str
     explanation: str
     weather_conditions: dict
+    error: Optional[str] = None
+    message: Optional[str] = None
 
 class SourceContribution(BaseModel):
     contributions: dict
