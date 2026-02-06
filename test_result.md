@@ -204,89 +204,29 @@ backend:
         comment: "Created model1/ and model2/ directories. Added MODEL_SETUP.md with comprehensive setup guide, README files in each model directory with instructions."
 
 frontend:
-  - task: "Update MapView component with heatmap toggle"
-    implemented: true
-    working: "NA"
-    file: "/app/frontend/src/components/MapView.jsx"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: true
-    status_history:
-      - working: "NA"
-        agent: "main"
-        comment: "Updated MapView with toggle between markers and heatmap. Integrated leaflet.heat plugin. Added 'High Pollution Zone Heatmap' label. Fetches data from /api/aqi/heatmap"
-  
-  - task: "Create RecommendationAssistant component"
-    implemented: true
-    working: "NA"
-    file: "/app/frontend/src/components/RecommendationAssistant.jsx"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: true
-    status_history:
-      - working: "NA"
-        agent: "main"
-        comment: "Created AI Recommendation Assistant with toggle for citizen/policymaker views. Shows contextual, prioritized recommendations with icons and explanations"
-  
-  - task: "Create ForecastAlerts component"
-    implemented: true
-    working: "NA"
-    file: "/app/frontend/src/components/ForecastAlerts.jsx"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: true
-    status_history:
-      - working: "NA"
-        agent: "main"
-        comment: "Created Forecast-Based Alerts component. Displays alerts with severity badges, time windows, affected groups, and AQI ranges. Color-coded by severity level"
-  
-  - task: "Create InsightsSummary component"
-    implemented: true
-    working: "NA"
-    file: "/app/frontend/src/components/InsightsSummary.jsx"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: true
-    status_history:
-      - working: "NA"
-        agent: "main"
-        comment: "Created Analytical Insights Summary component. Auto-generates key insights as bullet points, shows dominant source, trend, forecast summary, and recommended actions"
-  
-  - task: "Create TransparencyPanel component"
-    implemented: true
-    working: "NA"
-    file: "/app/frontend/src/components/TransparencyPanel.jsx"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: true
-    status_history:
-      - working: "NA"
-        agent: "main"
-        comment: "Created collapsible Data & Model Transparency Panel. Explains data sources (CPCB, WAQI, Satellite, Weather), simulation approach, ML upgrade path in 3 phases, and current limitations"
-  
-  - task: "Integrate new components into Dashboard page"
-    implemented: true
-    working: "NA"
-    file: "/app/frontend/src/pages/Dashboard.jsx"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: true
-    status_history:
-      - working: "NA"
-        agent: "main"
-        comment: "Integrated all 5 new components into Dashboard page. Added after map: RecommendationAssistant, ForecastAlerts, InsightsSummary, and TransparencyPanel before footer"
-  
-  - task: "Integrate new components into Prediction page"
-    implemented: true
+  - task: "Update Prediction page to show ML model status"
+    implemented: false
     working: "NA"
     file: "/app/frontend/src/pages/Prediction.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Need to update Prediction page to show notice when ML models are not loaded (prediction_type === 'not_loaded')"
+  
+  - task: "Update Dashboard to handle ML model status"
+    implemented: false
+    working: "NA"
+    file: "/app/frontend/src/pages/Dashboard.jsx"
     stuck_count: 0
     priority: "medium"
     needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "Added ForecastAlerts and InsightsSummary to Prediction page for comprehensive forecast analysis"
+        comment: "Need to update Dashboard to show appropriate messages when ML models not configured"
 
 metadata:
   created_by: "main_agent"
