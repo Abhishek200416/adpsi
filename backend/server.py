@@ -279,12 +279,10 @@ async def get_current_aqi():
 async def get_forecast():
     try:
         aqi_data = await get_current_aqi()
-        weather_data = {'temp': 28, 'humidity': 65, 'wind_speed': 6}
         
-        forecast_result = forecaster.predict(
-            current_aqi=aqi_data.aqi,
-            weather_data=weather_data,
-            hour_of_day=datetime.now().hour
+        # Use ML model prediction (async)
+        forecast_result = await forecaster.predict(
+            current_aqi=aqi_data.aqi
         )
         
         return ForecastResponse(**forecast_result)
