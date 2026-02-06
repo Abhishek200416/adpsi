@@ -8,6 +8,8 @@ import { ConfidenceIndicator } from '../components/ConfidenceIndicator';
 import { PredictionExplanation } from '../components/PredictionExplanation';
 import { SeasonalOutlook } from '../components/SeasonalOutlook';
 import { MethodologySection } from '../components/MethodologySection';
+import { ForecastAlerts } from '../components/ForecastAlerts';
+import { InsightsSummary } from '../components/InsightsSummary';
 import { TrendingUp, Brain, AlertCircle, Loader2 } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
