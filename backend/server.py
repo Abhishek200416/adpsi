@@ -140,6 +140,9 @@ class PolicyImpactResponse(BaseModel):
     timeline_days: int
     affected_sources: List[str]
     description: str
+    recommendation_reasoning: str
+    confidence_level: str
+    confidence_explanation: str
 
 @api_router.post("/auth/login", response_model=LoginResponse)
 async def admin_login(credentials: LoginRequest):
